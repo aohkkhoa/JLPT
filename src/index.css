@@ -1,0 +1,85 @@
+/* === GLOBAL & LAYOUT STYLES === */
+
+/* --- General Reset & Body --- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: #f8fafc;
+  color: #333;
+}
+
+/* --- Header --- */
+header {
+  background: linear-gradient(90deg, #e60023, #ff5e62);
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
+
+/* --- Navigation --- */
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+nav button {
+  background: none;
+  border: none;
+  padding: 1rem;
+  font-weight: bold;
+  font-size: 1rem;
+  color: #333;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+nav button:hover,
+nav button.active {
+  background: #e60023;
+  color: white;
+}
+
+/* --- Main Content Area --- */
+main {
+  max-width: 1100px;
+  margin: auto;
+  padding: 1rem;
+}
+
+/* Section styles for page transitions */
+section {
+  display: none;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Footer --- */
+footer {
+  text-align: center;
+  background: #333;
+  color: white;
+  padding: 1rem;
+  margin-top: 2rem;
+}
+
+/* --- Responsive --- */
+@media (max-width: 600px) {
+  nav button {
+    flex: 1 1 50%;
+  }
+}

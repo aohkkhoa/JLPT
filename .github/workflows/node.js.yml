@@ -1,0 +1,75 @@
+# Tên của workflow, sẽ hiển thị trên tab Actions của GitHub
+name: Deploy React App to GitHub Pages (Yarn)
+
+# Điều kiện để kích hoạt workflow
+on:
+  # 1. Tự động chạy mỗi khi có code được đẩy lên nhánh 'main'
+  push:
+    branches: [ "main" ]
+  # 2. Cho phép chạy thủ công từ tab Actions (có nút "Run workflow")
+  workflow_dispatch:
+
+# Quyền hạn cần thiết cho workflow để deploy lên GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Định nghĩa các công việc (jobs) sẽ được thực hiện
+jobs:
+  # --- JOB 1: BUILD ---
+  # Công việc này chịu trách nhiệm build ứng dụng React
+  build:
+    # Chạy trên một máy ảo Ubuntu phiên bản mới nhất
+    runs-on: ubuntu-latest
+    
+    # Các bước thực hiện trong job 'build'
+    steps:
+      # Bước 1: Lấy mã nguồn từ repository về máy ảo
+      - name: Checkout repository code
+        uses: actions/checkout@v4 # Dùng action có sẵn của GitHub
+
+      # Bước 2: Cài đặt Node.js và cấu hình cache cho Yarn
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'yarn' # Bật cache để các lần chạy sau nhanh hơn
+
+      # Bước 3: Cài đặt các gói phụ thuộc
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # Bước 4: Build ứng dụng ra các file tĩnh
+      - name: Build application
+        run: yarn build # Chạy lệnh 'yarn build'
+
+      # Bước 5: Tải lên (upload) thư mục build ('dist') như một artifact
+      # Artifact là một file hoặc thư mục được lưu lại sau khi job hoàn thành
+      # để job 'deploy' ở dưới có thể sử dụng
+      - name: Upload artifact for deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Thư mục chứa kết quả build. Vite mặc định là 'dist'
+          path: './dist' 
+
+  # --- JOB 2: DEPLOY ---
+  # Công việc này chịu trách nhiệm triển khai artifact lên GitHub Pages
+  deploy:
+    # Yêu cầu: job 'deploy' chỉ chạy sau khi job 'build' đã hoàn thành thành công
+    needs: build
+    
+    # Cấu hình môi trường deployment cho GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # Lấy URL sau khi deploy xong
+      
+    # Chạy trên máy ảo Ubuntu
+    runs-on: ubuntu-latest
+    
+    # Các bước thực hiện trong job 'deploy'
+    steps:
+      # Bước 1: Deploy lên GitHub Pages bằng artifact đã được upload từ job 'build'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 # Dùng action có sẵn để deploy

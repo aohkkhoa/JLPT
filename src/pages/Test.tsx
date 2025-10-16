@@ -77,26 +77,85 @@ const dakuten = [
   ["ぽ", "po"],
 ];
 
-const all = [...base, ...dakuten];
+const yoon = [
+  ["きゃ", "kya"],
+  ["きゅ", "kyu"],
+  ["きょ", "kyo"],
+  ["しゃ", "sha"],
+  ["しゅ", "shu"],
+  ["しょ", "sho"],
+  ["ちゃ", "cha"],
+  ["ちゅ", "chu"],
+  ["ちょ", "cho"],
+  ["にゃ", "nya"],
+  ["にゅ", "nyu"],
+  ["にょ", "nyo"],
+  ["ひゃ", "hya"],
+  ["ひゅ", "hyu"],
+  ["ひょ", "hyo"],
+  ["みゃ", "mya"],
+  ["みゅ", "myu"],
+  ["みょ", "myo"],
+  ["りゃ", "rya"],
+  ["りゅ", "ryu"],
+  ["りょ", "ryo"],
+];
 
-const katakanaMap = (s: string) => String.fromCharCode(s.charCodeAt(0) + 0x60);
+const katakanaMap = (hiragana: string) => {
+  return hiragana
+    .split("")
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      // Check if it's a Hiragana character
+      if (code >= 0x3041 && code <= 0x3096) {
+        return String.fromCharCode(code + 0x60);
+      }
+      return char; // Return the same character if it's not Hiragana (like small ゃ, ゅ, ょ)
+    })
+    .join("");
+};
+
+type TestType = "base" | "dakuten" | "yoon";
 
 export default function TestBatch() {
   const [mode, setMode] = useState<"jp2en" | "en2jp">("jp2en");
+  const [testType, setTestType] = useState<TestType>("base");
   const [count, setCount] = useState(5);
   const [questions, setQuestions] = useState<[string, string][]>([]);
   const [input, setInput] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
 
   const startTest = () => {
-    const shuffled = [...all].sort(() => Math.random() - 0.5);
-    setQuestions(shuffled.slice(0, count) as [string, string][]);
+    let characterSet: [string, string][];
+    if (testType === "base") {
+      characterSet = base as [string, string][];;
+    } else if (testType === "dakuten") {
+      characterSet = [...base, ...dakuten] as [string, string][];;
+    } else {
+      characterSet = [...base, ...dakuten, ...yoon] as [string, string][];;
+    }
+
+    const shuffledSet = [...characterSet].sort(() => Math.random() - 0.5);
+    setQuestions(shuffledSet.slice(0, count));
     setInput("");
     setShowAnswer(false);
   };
 
   const checkAnswers = () => {
     setShowAnswer(true);
+  };
+
+  const all =
+    testType === "base"
+      ? base
+      : testType === "dakuten"
+      ? [...base, ...dakuten]
+      : [...base, ...dakuten, ...yoon];
+
+  const testTypeLabels: Record<TestType, string> = {
+    base: "Cơ bản",
+    dakuten: "Biến âm",
+    yoon: "Âm ghép",
   };
 
   return (
@@ -106,7 +165,7 @@ export default function TestBatch() {
           🧠 Kana Batch Test
         </h1>
 
-        {/* Mode */}
+        {/* Mode: JP -> EN or EN -> JP */}
         <div className="flex justify-center gap-4 mb-4">
           <button
             onClick={() => setMode("jp2en")}
@@ -130,7 +189,24 @@ export default function TestBatch() {
           </button>
         </div>
 
-        {/* Số chữ */}
+        {/* Test Type Selection */}
+        <div className="flex justify-center gap-2 mb-4 border-b pb-4">
+          {(Object.keys(testTypeLabels) as TestType[]).map((type) => (
+            <button
+              key={type}
+              onClick={() => setTestType(type)}
+              className={`px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm transition-all ${
+                testType === type
+                  ? "bg-pink-300 text-white"
+                  : "bg-white text-gray-500 hover:bg-pink-50"
+              }`}
+            >
+              {testTypeLabels[type]}
+            </button>
+          ))}
+        </div>
+
+        {/* Number of questions */}
         <div className="flex justify-center gap-4 mb-4">
           <input
             type="number"
@@ -148,7 +224,7 @@ export default function TestBatch() {
           </button>
         </div>
 
-        {/* Batch hiển thị */}
+        {/* Test Area */}
         {questions.length > 0 && (
           <div className="mt-6">
             <div className="text-3xl mb-4 font-bold">
@@ -166,7 +242,7 @@ export default function TestBatch() {
               disabled={showAnswer}
             />
 
-            <div className="mt-4 flex justify-center gap-4">
+            <div className="mt-4 flex justify-center gap-4 mb-4">
               {!showAnswer ? (
                 <button
                   onClick={checkAnswers}
@@ -184,7 +260,7 @@ export default function TestBatch() {
               )}
             </div>
 
-            {/* Chỉ hiển thị đáp án */}
+            {/* Answers */}
             {showAnswer && (
               <div className="mt-4 flex flex-wrap justify-center gap-3 text-lg">
                 {questions.map(([jp, romaji], i) => (

@@ -71,7 +71,7 @@ export default function KanjiPage() {
           ))}
         </div>
 
-        {/* Chi tiết kanji khi chọn */}
+        {/* Chi tiết kanji khi chọn nè*/}
         {selected && (
           <div className="mt-8 bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-xl text-center relative">
             <button

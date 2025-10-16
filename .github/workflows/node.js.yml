@@ -33,7 +33,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
           cache: 'yarn' # Bật cache để các lần chạy sau nhanh hơn
 
       # Bước 3: Cài đặt các gói phụ thuộc

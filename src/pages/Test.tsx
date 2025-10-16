@@ -90,7 +90,7 @@ export default function TestBatch() {
 
   const startTest = () => {
     const shuffled = [...all].sort(() => Math.random() - 0.5);
-    setQuestions(shuffled.slice(0, count));
+    setQuestions(shuffled.slice(0, count) as [string, string][]);
     setInput("");
     setShowAnswer(false);
   };

@@ -13,7 +13,7 @@ export default function Header() {
     { name: "Ngữ pháp", path: "/grammar" },
     { name: "Kanji", path: "/kanji" },
     { name: "Flashcard", path: "/flashcard" },
-    { name: "Kiểm tra", path: "/test" },
+    { name: "Kiểm tra Tổng hợp", path: "/test" },
   ];
 
   return (

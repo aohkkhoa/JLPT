@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { allRadicals } from "../pages/radicals";
 
 const base = [
   ["あ", "a"],
@@ -115,28 +116,44 @@ const katakanaMap = (hiragana: string) => {
     .join("");
 };
 
-type TestType = "base" | "dakuten" | "yoon";
+type TestType = "base" | "dakuten" | "yoon" | "radical";
 
 export default function TestBatch() {
   const [mode, setMode] = useState<"jp2en" | "en2jp">("jp2en");
-  const [testType, setTestType] = useState<TestType>("base");
+  const [testType, setTestType] = useState<TestType>("radical");
   const [count, setCount] = useState(5);
   const [questions, setQuestions] = useState<[string, string][]>([]);
   const [input, setInput] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
+  const [inOrder, setInOrder] = useState(false);
 
   const startTest = () => {
     let characterSet: [string, string][];
-    if (testType === "base") {
+
+    if (testType === "radical") {
+      // Nếu là bộ thủ, câu hỏi là hình ảnh/ký tự, câu trả lời là Hán Việt
+      characterSet = allRadicals.map((r) => [r.image || r.char, r.hanViet]);
+    } else if (testType === "base") {
       characterSet = base as [string, string][];;
     } else if (testType === "dakuten") {
-      characterSet = [...base, ...dakuten] as [string, string][];;
+      characterSet = [...base, ...dakuten] as [string, string][];
     } else {
-      characterSet = [...base, ...dakuten, ...yoon] as [string, string][];;
+      // yoon
+      characterSet = [...base, ...dakuten, ...yoon] as [string, string][];
     }
 
-    const shuffledSet = [...characterSet].sort(() => Math.random() - 0.5);
-    setQuestions(shuffledSet.slice(0, count));
+    const safeCount = Math.min(count, characterSet.length);
+    let questionsToSet: [string, string][];
+
+    if (testType === "radical" && inOrder) {
+      const selection = characterSet.slice(0, safeCount);
+      const shuffledSelection = [...selection].sort(() => Math.random() - 0.5);
+      questionsToSet = shuffledSelection;
+    } else {
+      const shuffledSet = [...characterSet].sort(() => Math.random() - 0.5);
+      questionsToSet = shuffledSet.slice(0, safeCount);
+    }
+    setQuestions(questionsToSet);
     setInput("");
     setShowAnswer(false);
   };
@@ -146,13 +163,16 @@ export default function TestBatch() {
   };
 
   const all =
-    testType === "base"
+    testType === "radical"
+      ? allRadicals
+      : testType === "base"
       ? base
       : testType === "dakuten"
       ? [...base, ...dakuten]
       : [...base, ...dakuten, ...yoon];
 
   const testTypeLabels: Record<TestType, string> = {
+    radical: "Bộ thủ",
     base: "Cơ bản",
     dakuten: "Biến âm",
     yoon: "Âm ghép",
@@ -166,7 +186,7 @@ export default function TestBatch() {
         </h1>
 
         {/* Mode: JP -> EN or EN -> JP */}
-        <div className="flex justify-center gap-4 mb-4">
+        <div className={`flex justify-center gap-4 mb-4 ${testType === 'radical' ? 'hidden' : ''}`}>
           <button
             onClick={() => setMode("jp2en")}
             className={`px-4 py-2 rounded-full font-semibold shadow-md transition-all ${
@@ -224,18 +244,44 @@ export default function TestBatch() {
           </button>
         </div>
 
+        {/* In-order learning option for radicals */}
+        <div className={`flex justify-center items-center gap-2 mb-4 ${testType !== 'radical' ? 'hidden' : ''}`}>
+          <input
+            type="checkbox"
+            id="inOrder"
+            checked={inOrder}
+            onChange={(e) => setInOrder(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-pink-400 focus:ring-pink-300"
+          />
+          <label htmlFor="inOrder" className="text-sm text-gray-600">Học theo thứ tự</label>
+        </div>
+
         {/* Test Area */}
         {questions.length > 0 && (
-          <div className="mt-6">
-            <div className="text-3xl mb-4 font-bold">
-              {mode === "jp2en"
-                ? questions.map((q) => q[0]).join("  ")
-                : questions.map((q) => q[1]).join("  ")}
-            </div>
+          <div className="mt-6 w-full">
+            {testType === "radical" ? (
+              <div className="flex justify-center items-end gap-4 mb-4 h-24">
+                {questions.map(([question, _], i) =>
+                  question.endsWith(".png") ? (
+                    <img key={i} src={question} alt="radical" className="h-20 w-20 object-contain" />
+                  ) : (
+                    <div key={i} className="text-6xl font-serif font-bold text-indigo-800">
+                      {question}
+                    </div>
+                  )
+                )}
+              </div>
+            ) : (
+              <div className="text-3xl mb-4 font-bold tracking-widest">
+                {mode === "jp2en"
+                  ? questions.map((q) => q[0]).join("  ")
+                  : questions.map((q) => q[1]).join("  ")}
+              </div>
+            )}
 
             <input
               type="text"
-              placeholder="Nhập đáp án cách nhau bằng dấu cách..."
+              placeholder={testType === 'radical' ? "Nhập tên Hán Việt, cách nhau bằng dấu cách..." : "Nhập đáp án cách nhau bằng dấu cách..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               className="w-full text-center p-2 border border-gray-300 rounded-lg text-lg"
@@ -262,15 +308,26 @@ export default function TestBatch() {
 
             {/* Answers */}
             {showAnswer && (
-              <div className="mt-4 flex flex-wrap justify-center gap-3 text-lg">
-                {questions.map(([jp, romaji], i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-1 rounded-lg font-semibold bg-sky-200 text-sky-800"
-                  >
-                    {mode === "jp2en" ? romaji : `${jp} / ${katakanaMap(jp)}`}
-                  </span>
-                ))}
+              <div className="mt-4 flex flex-wrap justify-center gap-4 text-lg">
+                {questions.map(([question, answer], i) =>
+                  testType === "radical" ? (
+                    <div key={i} className="p-2 rounded-lg bg-green-200 text-green-800 font-semibold">
+                      {question.endsWith(".png") ? (
+                         <img src={question} alt="radical" className="h-10 w-10 mx-auto object-contain" />
+                      ) : (
+                        <div className="font-bold text-2xl">{question}</div>
+                      )}
+                      <div>{answer}</div>
+                    </div>
+                  ) : (
+                    <span
+                      key={i}
+                      className="px-2 py-1 rounded-lg font-semibold bg-sky-200 text-sky-800"
+                    >
+                      {mode === "jp2en" ? answer : `${question} / ${katakanaMap(question)}`}
+                    </span>
+                  )
+                )}
               </div>
             )}
           </div>

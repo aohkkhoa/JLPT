@@ -11,6 +11,7 @@ import Grammar from "./pages/Grammar";
 import Kanji from "./pages/Kanji";
 import Flashcard from "./pages/Flashcard";
 import Test from "./pages/Test";
+import RadicalsPage from "./pages/RadicalsPage";
 
 export default function App() {
   const location = useLocation();
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="/grammar" element={<Grammar />} />
               <Route path="/kanji" element={<Kanji />} />
               <Route path="/flashcard" element={<Flashcard />} />
+              <Route path="/radicals" element={<RadicalsPage />} />
               <Route path="/test" element={<Test />} />
             </Routes>
           </motion.div>

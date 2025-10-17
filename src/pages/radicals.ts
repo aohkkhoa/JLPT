@@ -4,21 +4,22 @@ export type Radical = {
   image?: string; // Thêm đường dẫn hình ảnh (tùy chọn)
   meaning: string;
 };
-
+const BASE_URL = import.meta.env.BASE_URL;
 export const allRadicals: Radical[] = [
-  { char: "一", hanViet: "nhất", meaning: "một", image: "/images/radicals/nhat.png" },
-  { char: "丨", hanViet: "cổn", meaning: "nét sổ", image: "/images/radicals/con.png" },
-  { char: "丶", hanViet: "chủ", meaning: "nét chấm", image: "/images/radicals/chu.png" },
-  { char: "丿", hanViet: "phiệt", meaning: "nét phẩy", image: "/images/radicals/phiet.png" },
-  { char: "乙", hanViet: "ất", meaning: "vị trí thứ 2 trong thiên can", image: "/images/radicals/at.png" },
-  { char: "亅", hanViet: "quyết", meaning: "nét sổ có móc" },
-  { char: "二", hanViet: "nhị", meaning: "hai" },
-  { char: "亠", hanViet: "đầu", meaning: "cái đầu" },
-  { char: "人", hanViet: "nhân", meaning: "người" },
-  { char: "亻", hanViet: "nhân đứng", meaning: "người (biến thể)" },
+  { char: "一", hanViet: "nhất", meaning: "một", image: `${BASE_URL}images/radicals/nhat.png` },
+  { char: "丨", hanViet: "cổn", meaning: "nét sổ", image: `${BASE_URL}images/radicals/conn.png` },
+  { char: "丶", hanViet: "chủ", meaning: "nét chấm", image: `${BASE_URL}images/radicals/chu.png` },
+  { char: "丿", hanViet: "phiệt", meaning: "nét phẩy", image: `${BASE_URL}images/radicals/phiet.png` },
+  { char: "乙", hanViet: "ất", meaning: "vị trí thứ 2 trong thiên can", image: `${BASE_URL}images/radicals/at.png` },
+  { char: "亅", hanViet: "quyết", meaning: "nét sổ có móc", image: `${BASE_URL}images/radicals/quyet.png` },
+  { char: "二", hanViet: "nhị", meaning: "hai", image: `${BASE_URL}images/radicals/nhi.png` },
+  { char: "亠", hanViet: "đầu", meaning: "cái đầu", image: `${BASE_URL}images/radicals/dau.png` },
+  { char: "人", hanViet: "nhân", meaning: "người", image: `${BASE_URL}images/radicals/nhan.png` },
+  { char: "亻", hanViet: "nhân đứng", meaning: "người (biến thể)", image: `${BASE_URL}images/radicals/nhan dung.png` },
+  { char: "𠂉", hanViet: "nhân nằm", meaning: "người (biến thể)", image: `${BASE_URL}images/radicals/nhan nam.png` },
   { char: "儿", hanViet: "nhi", meaning: "trẻ con" },
   { char: "入", hanViet: "nhập", meaning: "vào" },
-  { char: "八", hanViet: "bát", meaning: "tám" },
+  { char: "八", hanViet: "bát", meaning: "tám", image: `${BASE_URL}images/radicals/so tam.png` },
   { char: "冂", hanViet: "quynh", meaning: "vùng biên giới xa" },
   { char: "冖", hanViet: "mịch", meaning: "trùm khăn lên" },
   { char: "冫", hanViet: "băng", meaning: "nước đá" },

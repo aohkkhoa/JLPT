@@ -6,11 +6,11 @@ export type Radical = {
 };
 
 export const allRadicals: Radical[] = [
-  { char: "一", hanViet: "nhất", meaning: "một" },
-  { char: "丨", hanViet: "cổn", meaning: "nét sổ" },
-  { char: "丶", hanViet: "chủ", meaning: "nét chấm" },
-  { char: "丿", hanViet: "phiệt", meaning: "nét phẩy" },
-  { char: "乙", hanViet: "ất", meaning: "vị trí thứ 2 trong thiên can" },
+  { char: "一", hanViet: "nhất", meaning: "một", image: "/images/radicals/nhat.png" },
+  { char: "丨", hanViet: "cổn", meaning: "nét sổ", image: "/images/radicals/con.png" },
+  { char: "丶", hanViet: "chủ", meaning: "nét chấm", image: "/images/radicals/chu.png" },
+  { char: "丿", hanViet: "phiệt", meaning: "nét phẩy", image: "/images/radicals/phiet.png" },
+  { char: "乙", hanViet: "ất", meaning: "vị trí thứ 2 trong thiên can", image: "/images/radicals/at.png" },
   { char: "亅", hanViet: "quyết", meaning: "nét sổ có móc" },
   { char: "二", hanViet: "nhị", meaning: "hai" },
   { char: "亠", hanViet: "đầu", meaning: "cái đầu" },

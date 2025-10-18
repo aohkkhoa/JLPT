@@ -1,9 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { allRadicals } from "./radicals";
 import type { Radical } from "./radicals";
 export default function RadicalsPage() {
   const [selected, setSelected] = useState<Radical | null>(null);
+
+  // Thêm useEffect để xử lý việc nhấn phím Escape
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelected(null);
+      }
+    };
+
+    // Chỉ thêm listener khi modal đang mở
+    if (selected) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    // Dọn dẹp listener khi component unmount hoặc khi `selected` thay đổi
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selected]); // Dependency array, effect sẽ chạy lại khi `selected` thay đổi
 
   return (
     <div className="min-h-[calc(100vh-88px)] bg-gradient-to-b from-indigo-50 via-sky-50 to-pink-50 p-6">

@@ -1,9 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { allRadicals } from "./radicals";
 import type { Radical } from "./radicals";
+
 export default function RadicalsPage() {
   const [selected, setSelected] = useState<Radical | null>(null);
+
+  // Sử dụng useMemo để nhóm các bộ thủ theo số nét, chỉ tính toán lại khi allRadicals thay đổi
+  const groupedRadicals = useMemo(() => {
+    const groups: Record<string, Radical[]> = {};
+    allRadicals.forEach((radical) => {
+      const { strokes } = radical;
+      if (!groups[strokes]) {
+        groups[strokes] = [];
+      }
+      groups[strokes].push(radical);
+    });
+    return groups;
+  }, []);
 
   // Thêm useEffect để xử lý việc nhấn phím Escape
   useEffect(() => {
@@ -31,20 +45,29 @@ export default function RadicalsPage() {
           214 Bộ thủ Kanji
         </h1>
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-          {allRadicals.map((radical) => (
-            <motion.div
-              key={radical.char + radical.hanViet}
-              whileHover={{ scale: 1.1, y: -5 }}
-              onClick={() => setSelected(radical)}
-              className="cursor-pointer p-3 rounded-2xl bg-white/80 backdrop-blur-sm shadow-md flex flex-col items-center justify-center text-center"
-            >
-              <div className="text-4xl font-bold text-indigo-600">
-                {radical.char}
+        <div className="space-y-10">
+          {Object.entries(groupedRadicals).map(([strokes, radicals]) => (
+            <div key={strokes}>
+              <h2 className="text-2xl font-bold text-indigo-500 mb-4 pb-2 border-b-2 border-indigo-200">
+                {strokes} nét
+              </h2>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                {radicals.map((radical) => (
+                  <motion.div
+                    key={radical.char + radical.hanViet}
+                    whileHover={{ scale: 1.1, y: -5 }}
+                    onClick={() => setSelected(radical)}
+                    className="cursor-pointer p-3 rounded-2xl bg-white/80 backdrop-blur-sm shadow-md flex flex-col items-center justify-center text-center"
+                  >
+                    <div className="text-4xl font-bold text-indigo-600">
+                      {radical.char}
+                    </div>
+                    <div className="text-gray-800 font-semibold text-sm mt-1">{radical.hanViet}</div>
+                    <div className="text-gray-600 text-xs">{radical.meaning}</div>
+                  </motion.div>
+                ))}
               </div>
-              <div className="text-gray-800 font-semibold text-sm mt-1">{radical.hanViet}</div>
-              <div className="text-gray-600 text-xs">{radical.meaning}</div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

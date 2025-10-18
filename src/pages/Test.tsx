@@ -425,12 +425,15 @@ function BatchTest() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [inOrder, setInOrder] = useState(false);
 
+  const [startRange, setStartRange] = useState(1);
+  const [endRange, setEndRange] = useState(10);
+
   const startTest = () => {
     let characterSet: [string, string][];
 
     if (testType === "radical") {
       // Nếu là bộ thủ, câu hỏi là hình ảnh/ký tự, câu trả lời là Hán Việt
-      characterSet = allRadicals.map((r) => [r.image || r.char, r.hanViet]);
+      characterSet = allRadicals.map((r) => [r.char, r.meaning] as [string, string]);
     } else if (testType === "base") {
       characterSet = base as [string, string][];;
     } else if (testType === "dakuten") {
@@ -444,10 +447,29 @@ function BatchTest() {
     let questionsToSet: [string, string][];
 
     if (testType === "radical" && inOrder) {
-      const selection = characterSet.slice(0, safeCount);
-      const shuffledSelection = [...selection].sort(() => Math.random() - 0.5);
-      questionsToSet = shuffledSelection;
+      // 1. Xác định chỉ số bắt đầu và kết thúc
+      const startIndex = Math.max(0, startRange - 1);
+      const endIndex = Math.min(characterSet.length, endRange);
+
+      // Kiểm tra nếu dải không hợp lệ
+      if (startIndex >= endIndex) {
+        alert("Số bắt đầu phải nhỏ hơn số kết thúc.");
+        setQuestions([]); // Xóa câu hỏi cũ
+        return;
+      }
+
+      // 2. Cắt mảng để lấy ra các bộ thủ trong dải đã chọn
+      const rangeOfRadicals = characterSet.slice(startIndex, endIndex);
+
+      // 3. Xáo trộn các bộ thủ trong dải đó
+      const shuffledRange = [...rangeOfRadicals].sort(() => Math.random() - 0.5);
+
+      // 4. Lấy ra số lượng câu hỏi mong muốn từ dải đã xáo trộn
+      const finalCount = Math.min(count, shuffledRange.length);
+      questionsToSet = shuffledRange.slice(0, finalCount);
+
     } else {
+      // Logic cũ cho việc lấy ngẫu nhiên trên toàn bộ danh sách
       const shuffledSet = [...characterSet].sort(() => Math.random() - 0.5);
       questionsToSet = shuffledSet.slice(0, safeCount);
     }
@@ -523,34 +545,73 @@ function BatchTest() {
         ))}
       </div>
 
-      {/* Number of questions */}
-      <div className="flex justify-center gap-4 mb-4">
-        <input
-          type="number"
-          min={1}
-          max={all.length}
-          value={count}
-          onChange={(e) => setCount(Number(e.target.value))}
-          className="w-24 text-center p-2 rounded-lg border border-gray-300"
-        />
+      {/* --- CÀI ĐẶT BÀI KIỂM TRA --- */}
+      <div className="flex flex-col items-center gap-4 mb-4">
+        {/* Dòng 1: Số lượng câu hỏi & Lựa chọn học theo thứ tự */}
+        <div className="flex items-end justify-center gap-4">
+          <div className="flex flex-col items-center">
+            <label htmlFor="questionCount" className="text-sm text-gray-600 mb-1">Số câu hỏi</label>
+            <input
+              id="questionCount"
+              type="number"
+              min={1}
+              max={all.length}
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="w-24 text-center p-2 rounded-lg border border-gray-300"
+            />
+          </div>
+          <div className={`flex items-center gap-2 pb-2 ${testType !== 'radical' ? 'hidden' : ''}`}>
+            <input
+              type="checkbox"
+              id="inOrder"
+              checked={inOrder}
+              onChange={(e) => setInOrder(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-pink-400 focus:ring-pink-300"
+            />
+            <label htmlFor="inOrder" className="text-sm text-gray-600">Chọn khoảng</label>
+          </div>
+        </div>
+
+        {/* Dòng 2: Chọn khoảng (chỉ hiện khi cần) */}
+        {testType === 'radical' && inOrder && (
+          <div className="flex items-end justify-center gap-4">
+            <div className="flex flex-col items-center">
+              <label htmlFor="startRange" className="text-sm text-gray-600 mb-1">Từ bộ số</label>
+              <input
+                id="startRange"
+                type="number"
+                min={1}
+                max={all.length}
+                value={startRange}
+                onChange={(e) => setStartRange(Number(e.target.value))}
+                className="w-24 text-center p-2 rounded-lg border border-gray-300"
+              />
+            </div>
+            <div className="flex flex-col items-center">
+              <label htmlFor="endRange" className="text-sm text-gray-600 mb-1">Đến bộ số</label>
+              <input
+                id="endRange"
+                type="number"
+                min={1}
+                max={all.length}
+                value={endRange}
+                onChange={(e) => setEndRange(Number(e.target.value))}
+                className="w-24 text-center p-2 rounded-lg border border-gray-300"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Nút Bắt đầu */}
+      <div className="flex justify-center mb-4">
         <button
           onClick={startTest}
           className="px-6 py-2 bg-gradient-to-r from-pink-300 via-sky-300 to-indigo-300 text-white rounded-full font-semibold shadow-md hover:opacity-90 transition-all"
         >
           Bắt đầu
         </button>
-      </div>
-
-      {/* In-order learning option for radicals */}
-      <div className={`flex justify-center items-center gap-2 mb-4 ${testType !== 'radical' ? 'hidden' : ''}`}>
-        <input
-          type="checkbox"
-          id="inOrder"
-          checked={inOrder}
-          onChange={(e) => setInOrder(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-pink-400 focus:ring-pink-300"
-        />
-        <label htmlFor="inOrder" className="text-sm text-gray-600">Học theo thứ tự</label>
       </div>
 
       {/* Test Area */}
@@ -609,11 +670,11 @@ function BatchTest() {
               {questions.map(([question, answer], i) =>
                 testType === "radical" ? (
                   <div key={i} className="p-2 rounded-lg bg-green-200 text-green-800 font-semibold">
-                    {question.endsWith(".png") ? (
+                    {/* {question.endsWith(".png") ? (
                        <img src={question} alt="radical" className="h-10 w-10 mx-auto object-contain" />
                     ) : (
-                      <div className="font-bold text-2xl">{question}</div>
-                    )}
+                      <div className="font-bold text-2xl">{answer}</div>
+                    )} */}
                     <div>{answer}</div>
                   </div>
                 ) : (

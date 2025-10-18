@@ -204,10 +204,10 @@ function QuizMode() {
 
     setIsAnswered(true);
     setIsCorrect(correct);
-    if (correct) { 
+    if (correct) {
       setScore(score + 1);
     }
-    
+
     setHistory(prev => [...prev, {
       question,
       correctAnswer,
@@ -241,7 +241,7 @@ function QuizMode() {
     return (
       <div className="w-full max-w-lg mx-auto text-left">
         <h2 className="text-2xl font-bold text-indigo-600 mb-6 text-center">Cài đặt bài kiểm tra</h2>
-        
+
         {/* Number of Questions */}
         <div className="mb-6">
           <label htmlFor="numQuestions" className="block text-lg font-semibold text-gray-700 mb-2">
@@ -368,13 +368,12 @@ function QuizMode() {
             ref={inputRef}
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
-            className={`w-full p-3 border-2 rounded-lg text-center text-xl transition-all duration-300 ${
-              isAnswered
+            className={`w-full p-3 border-2 rounded-lg text-center text-xl transition-all duration-300 ${isAnswered
                 ? isCorrect
                   ? "border-green-400 bg-green-50"
                   : "border-red-400 bg-red-50"
                 : "border-gray-300 focus:border-sky-400 focus:ring-sky-400"
-            }`}
+              }`}
             placeholder="Nhập phiên âm romaji"
             readOnly={isAnswered}
           />
@@ -388,11 +387,10 @@ function QuizMode() {
           className="mt-4"
         >
           <div
-            className={`p-3 rounded-lg text-center font-semibold ${
-              isCorrect
+            className={`p-3 rounded-lg text-center font-semibold ${isCorrect
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
-            }`}
+              }`}
           >
             {isCorrect ? "Chính xác!" : `Sai rồi! Đáp án đúng là: ${answer}`}
           </div>
@@ -425,12 +423,15 @@ function BatchTest() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [inOrder, setInOrder] = useState(false);
 
+  const [startRange, setStartRange] = useState(1);
+  const [endRange, setEndRange] = useState(10);
+
   const startTest = () => {
     let characterSet: [string, string][];
 
     if (testType === "radical") {
       // Nếu là bộ thủ, câu hỏi là hình ảnh/ký tự, câu trả lời là Hán Việt
-      characterSet = allRadicals.map((r) => [r.image || r.char, r.hanViet]);
+      characterSet = allRadicals.map((r) => [r.char, r.meaning] as [string, string]);
     } else if (testType === "base") {
       characterSet = base as [string, string][];;
     } else if (testType === "dakuten") {
@@ -444,10 +445,29 @@ function BatchTest() {
     let questionsToSet: [string, string][];
 
     if (testType === "radical" && inOrder) {
-      const selection = characterSet.slice(0, safeCount);
-      const shuffledSelection = [...selection].sort(() => Math.random() - 0.5);
-      questionsToSet = shuffledSelection;
+      // 1. Xác định chỉ số bắt đầu và kết thúc
+      const startIndex = Math.max(0, startRange - 1);
+      const endIndex = Math.min(characterSet.length, endRange);
+
+      // Kiểm tra nếu dải không hợp lệ
+      if (startIndex >= endIndex) {
+        alert("Số bắt đầu phải nhỏ hơn số kết thúc.");
+        setQuestions([]); // Xóa câu hỏi cũ
+        return;
+      }
+
+      // 2. Cắt mảng để lấy ra các bộ thủ trong dải đã chọn
+      const rangeOfRadicals = characterSet.slice(startIndex, endIndex);
+
+      // 3. Xáo trộn các bộ thủ trong dải đó
+      const shuffledRange = [...rangeOfRadicals].sort(() => Math.random() - 0.5);
+
+      // 4. Lấy ra số lượng câu hỏi mong muốn từ dải đã xáo trộn
+      const finalCount = Math.min(count, shuffledRange.length);
+      questionsToSet = shuffledRange.slice(0, finalCount);
+
     } else {
+      // Logic cũ cho việc lấy ngẫu nhiên trên toàn bộ danh sách
       const shuffledSet = [...characterSet].sort(() => Math.random() - 0.5);
       questionsToSet = shuffledSet.slice(0, safeCount);
     }
@@ -464,10 +484,10 @@ function BatchTest() {
     testType === "radical"
       ? allRadicals
       : testType === "base"
-      ? base
-      : testType === "dakuten"
-      ? [...base, ...dakuten]
-      : [...base, ...dakuten, ...yoon];
+        ? base
+        : testType === "dakuten"
+          ? [...base, ...dakuten]
+          : [...base, ...dakuten, ...yoon];
 
   const testTypeLabels: Record<TestType, string> = {
     radical: "Bộ thủ",
@@ -486,21 +506,19 @@ function BatchTest() {
       <div className={`flex justify-center gap-4 mb-4 ${testType === 'radical' ? 'hidden' : ''}`}>
         <button
           onClick={() => setMode("jp2en")}
-          className={`px-4 py-2 rounded-full font-semibold shadow-md transition-all ${
-            mode === "jp2en"
+          className={`px-4 py-2 rounded-full font-semibold shadow-md transition-all ${mode === "jp2en"
               ? "bg-sky-300 text-white"
               : "bg-white text-gray-600 hover:bg-sky-50"
-          }`}
+            }`}
         >
           🇯🇵 → 🇺🇸
         </button>
         <button
           onClick={() => setMode("en2jp")}
-          className={`px-4 py-2 rounded-full font-semibold shadow-md transition-all ${
-            mode === "en2jp"
+          className={`px-4 py-2 rounded-full font-semibold shadow-md transition-all ${mode === "en2jp"
               ? "bg-sky-300 text-white"
               : "bg-white text-gray-600 hover:bg-sky-50"
-          }`}
+            }`}
         >
           🇺🇸 → 🇯🇵
         </button>
@@ -512,27 +530,77 @@ function BatchTest() {
           <button
             key={type}
             onClick={() => setTestType(type)}
-            className={`px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm transition-all ${
-              testType === type
+            className={`px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm transition-all ${testType === type
                 ? "bg-pink-300 text-white"
                 : "bg-white text-gray-500 hover:bg-pink-50"
-            }`}
+              }`}
           >
             {testTypeLabels[type]}
           </button>
         ))}
       </div>
 
-      {/* Number of questions */}
-      <div className="flex justify-center gap-4 mb-4">
-        <input
-          type="number"
-          min={1}
-          max={all.length}
-          value={count}
-          onChange={(e) => setCount(Number(e.target.value))}
-          className="w-24 text-center p-2 rounded-lg border border-gray-300"
-        />
+      {/* --- CÀI ĐẶT BÀI KIỂM TRA --- */}
+      <div className="flex flex-col items-center gap-4 mb-4">
+        {/* Dòng 1: Số lượng câu hỏi & Lựa chọn học theo thứ tự */}
+        <div className="flex items-end justify-center gap-4">
+          <div className="flex flex-col items-center">
+            <label htmlFor="questionCount" className="text-sm text-gray-600 mb-1">Số câu hỏi</label>
+            <input
+              id="questionCount"
+              type="number"
+              min={1}
+              max={all.length}
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="w-24 text-center p-2 rounded-lg border border-gray-300"
+            />
+          </div>
+          <div className={`flex items-center gap-2 pb-2 ${testType !== 'radical' ? 'hidden' : ''}`}>
+            <input
+              type="checkbox"
+              id="inOrder"
+              checked={inOrder}
+              onChange={(e) => setInOrder(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-pink-400 focus:ring-pink-300"
+            />
+            <label htmlFor="inOrder" className="text-sm text-gray-600">Chọn khoảng</label>
+          </div>
+        </div>
+
+        {/* Dòng 2: Chọn khoảng (chỉ hiện khi cần) */}
+        {testType === 'radical' && inOrder && (
+          <div className="flex items-end justify-center gap-4">
+            <div className="flex flex-col items-center">
+              <label htmlFor="startRange" className="text-sm text-gray-600 mb-1">Từ bộ số</label>
+              <input
+                id="startRange"
+                type="number"
+                min={1}
+                max={all.length}
+                value={startRange}
+                onChange={(e) => setStartRange(Number(e.target.value))}
+                className="w-24 text-center p-2 rounded-lg border border-gray-300"
+              />
+            </div>
+            <div className="flex flex-col items-center">
+              <label htmlFor="endRange" className="text-sm text-gray-600 mb-1">Đến bộ số</label>
+              <input
+                id="endRange"
+                type="number"
+                min={1}
+                max={all.length}
+                value={endRange}
+                onChange={(e) => setEndRange(Number(e.target.value))}
+                className="w-24 text-center p-2 rounded-lg border border-gray-300"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Nút Bắt đầu */}
+      <div className="flex justify-center mb-4">
         <button
           onClick={startTest}
           className="px-6 py-2 bg-gradient-to-r from-pink-300 via-sky-300 to-indigo-300 text-white rounded-full font-semibold shadow-md hover:opacity-90 transition-all"
@@ -541,23 +609,11 @@ function BatchTest() {
         </button>
       </div>
 
-      {/* In-order learning option for radicals */}
-      <div className={`flex justify-center items-center gap-2 mb-4 ${testType !== 'radical' ? 'hidden' : ''}`}>
-        <input
-          type="checkbox"
-          id="inOrder"
-          checked={inOrder}
-          onChange={(e) => setInOrder(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-pink-400 focus:ring-pink-300"
-        />
-        <label htmlFor="inOrder" className="text-sm text-gray-600">Học theo thứ tự</label>
-      </div>
-
       {/* Test Area */}
       {questions.length > 0 && (
         <div className="mt-6 w-full">
           {testType === "radical" ? (
-            <div className="flex justify-center items-end gap-4 mb-4 h-24">
+            <div className="flex flex-wrap justify-center items-end gap-4 mb-4 min-h-[6rem]">
               {questions.map(([question, _], i) =>
                 question.endsWith(".png") ? (
                   <img key={i} src={question} alt="radical" className="h-20 w-20 object-contain" />
@@ -569,10 +625,13 @@ function BatchTest() {
               )}
             </div>
           ) : (
-            <div className="text-3xl mb-4 font-bold tracking-widest">
-              {mode === "jp2en"
-                ? questions.map((q) => q[0]).join("  ")
-                : questions.map((q) => q[1]).join("  ")}
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-3xl mb-4 font-bold tracking-widest">
+              {(mode === "jp2en"
+                ? questions.map((q) => q[0])
+                : questions.map((q) => q[1])
+              ).map((char, index) => (
+                <span key={index}>{char}</span>
+              ))}
             </div>
           )}
 
@@ -609,11 +668,11 @@ function BatchTest() {
               {questions.map(([question, answer], i) =>
                 testType === "radical" ? (
                   <div key={i} className="p-2 rounded-lg bg-green-200 text-green-800 font-semibold">
-                    {question.endsWith(".png") ? (
+                    {/* {question.endsWith(".png") ? (
                        <img src={question} alt="radical" className="h-10 w-10 mx-auto object-contain" />
                     ) : (
-                      <div className="font-bold text-2xl">{question}</div>
-                    )}
+                      <div className="font-bold text-2xl">{answer}</div>
+                    )} */}
                     <div>{answer}</div>
                   </div>
                 ) : (
@@ -642,9 +701,8 @@ export default function TestPage() {
         <div className="flex justify-center border-b mb-6">
           <button
             onClick={() => setQuizMode("batch")}
-            className={`px-6 py-2 font-semibold text-gray-600 relative transition-colors ${
-              quizMode === "batch" ? "text-indigo-600" : "hover:text-indigo-500"
-            }`}
+            className={`px-6 py-2 font-semibold text-gray-600 relative transition-colors ${quizMode === "batch" ? "text-indigo-600" : "hover:text-indigo-500"
+              }`}
           >
             Luyện tập
             {quizMode === "batch" && (
@@ -656,9 +714,8 @@ export default function TestPage() {
           </button>
           <button
             onClick={() => setQuizMode("quiz")}
-            className={`px-6 py-2 font-semibold text-gray-600 relative transition-colors ${
-              quizMode === "quiz" ? "text-indigo-600" : "hover:text-indigo-500"
-            }`}
+            className={`px-6 py-2 font-semibold text-gray-600 relative transition-colors ${quizMode === "quiz" ? "text-indigo-600" : "hover:text-indigo-500"
+              }`}
           >
             Kiểm tra tính điểm
             {quizMode === "quiz" && (

@@ -43,7 +43,7 @@ export const allRadicals: Radical[] = [
   { char: "囗", hanViet: "vi", meaning: "vây quanh", strokes: 3 },
   { char: "土", hanViet: "thổ", meaning: "đất", strokes: 3 },
   { char: "士", hanViet: "sĩ", meaning: "kẻ sĩ", strokes: 3 },
-  { char: "夂", hanViet: "trĩ", meaning: "đến sau", strokes: 3 },
+  { char: "夂", hanViet: "tri", meaning: "đến sau", strokes: 3 },
   { char: "夊", hanViet: "tuy", meaning: "đi chậm", strokes: 3 },
   { char: "夕", hanViet: "tịch", meaning: "đêm tối", strokes: 3 },
   { char: "大", hanViet: "đại", meaning: "to lớn", strokes: 3 },

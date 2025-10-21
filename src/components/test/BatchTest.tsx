@@ -32,6 +32,8 @@ function BatchTest() {
   const [startRange, setStartRange] = useState(1);
   const [endRange, setEndRange] = useState(10);
 
+  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
+
   const startTest = () => {
     let characterSet: [string, string][];
 
@@ -69,6 +71,7 @@ function BatchTest() {
     setQuestions(questionsToSet);
     setInput("");
     setShowAnswer(false);
+    setActiveTooltipIndex(null);
   };
 
   const checkAnswers = () => {
@@ -91,6 +94,12 @@ function BatchTest() {
     yoon: "Âm ghép",
   };
 
+  const handleCharacterClick = (index: number) => {
+    // Nếu click vào chính chữ đang hiển thị tooltip, hãy ẩn nó đi.
+    // Ngược lại, hiển thị tooltip cho chữ được click.
+    setActiveTooltipIndex(prevIndex => (prevIndex === index ? null : index));
+  };
+
   return (
     <>
       <h1 className="text-3xl font-bold text-gray-700 mb-6">
@@ -102,8 +111,8 @@ function BatchTest() {
         <button
           onClick={() => setMode("jp2en")}
           className={`px-4 py-2 rounded-full font-semibold shadow-md transition-all ${mode === "jp2en"
-              ? "bg-sky-300 text-white"
-              : "bg-white text-gray-600 hover:bg-sky-50"
+            ? "bg-sky-300 text-white"
+            : "bg-white text-gray-600 hover:bg-sky-50"
             }`}
         >
           🇯🇵 → 🇺🇸
@@ -111,8 +120,8 @@ function BatchTest() {
         <button
           onClick={() => setMode("en2jp")}
           className={`px-4 py-2 rounded-full font-semibold shadow-md transition-all ${mode === "en2jp"
-              ? "bg-sky-300 text-white"
-              : "bg-white text-gray-600 hover:bg-sky-50"
+            ? "bg-sky-300 text-white"
+            : "bg-white text-gray-600 hover:bg-sky-50"
             }`}
         >
           🇺🇸 → 🇯🇵
@@ -126,8 +135,8 @@ function BatchTest() {
             key={type}
             onClick={() => setTestType(type)}
             className={`px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm transition-all ${testType === type
-                ? "bg-pink-300 text-white"
-                : "bg-white text-gray-500 hover:bg-pink-50"
+              ? "bg-pink-300 text-white"
+              : "bg-white text-gray-500 hover:bg-pink-50"
               }`}
           >
             {testTypeLabels[type]}
@@ -209,24 +218,54 @@ function BatchTest() {
         <div className="mt-6 w-full">
           {testType === "radical" ? (
             <div className="flex flex-wrap justify-center items-end gap-4 mb-4 min-h-[6rem]">
-              {questions.map(([question, _], i) =>
-                question.endsWith(".png") ? (
-                  <img key={i} src={question} alt="radical" className="h-20 w-20 object-contain" />
-                ) : (
-                  <div key={i} className="text-6xl font-serif font-bold text-indigo-800">
-                    {question}
-                  </div>
-                )
-              )}
+              {questions.map(([question, answer], i) => (
+                // Bọc mỗi item trong một div relative để định vị tooltip
+                <div
+                  key={i}
+                  className="relative cursor-pointer"
+                  onClick={() => handleCharacterClick(i)}
+                >
+                  {question.endsWith(".png") ? (
+                    <img src={question} alt="radical" className="h-20 w-20 object-contain" />
+                  ) : (
+                    <div className="text-6xl font-serif font-bold text-indigo-800">
+                      {question}
+                    </div>
+                  )}
+                  {/* Tooltip hiển thị có điều kiện */}
+                  {activeTooltipIndex === i && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-800 text-white text-sm rounded-md shadow-lg z-10 whitespace-nowrap">
+                      {answer}
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800"></div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           ) : (
             <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-3xl mb-4 font-bold tracking-widest">
-              {(mode === "jp2en"
-                ? questions.map((q) => q[0])
-                : questions.map((q) => q[1])
-              ).map((char, index) => (
-                <span key={index}>{char}</span>
-              ))}
+              {questions.map(([question, answer], i) => {
+                const displayChar = mode === 'jp2en' ? question : answer;
+                const tooltipText = mode === 'jp2en' ? answer : `${question} / ${katakanaMap(question)}`;
+
+                return (
+                  // Bọc mỗi item trong một div relative để định vị tooltip
+                  <div
+                    key={i}
+                    className="relative cursor-pointer"
+                    onClick={() => handleCharacterClick(i)}
+                  >
+                    <span>{displayChar}</span>
+                    {/* Tooltip hiển thị có điều kiện */}
+                    {activeTooltipIndex === i && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-800 text-white text-sm rounded-md shadow-lg z-10 whitespace-nowrap">
+                        {tooltipText}
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800"></div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 

@@ -228,7 +228,7 @@ function BatchTest() {
                   {question.endsWith(".png") ? (
                     <img src={question} alt="radical" className="h-20 w-20 object-contain" />
                   ) : (
-                    <div className="text-6xl font-serif font-bold text-indigo-800">
+                    <div className="text-6xl font-serif font-bold tracking-wider text-indigo-800">
                       {question}
                     </div>
                   )}

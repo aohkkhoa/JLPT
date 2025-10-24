@@ -38,7 +38,7 @@ function BatchTest() {
     let characterSet: [string, string][];
 
     if (testType === "radical") {
-      characterSet = allRadicals.map((r) => [r.char, r.meaning] as [string, string]);
+      characterSet = allRadicals.map((r) => [r.char, r.hanViet + ": " + r.meaning] as [string, string]);
     } else if (testType === "base") {
       characterSet = base as [string, string][];
     } else if (testType === "dakuten") {

@@ -76,6 +76,7 @@ export const dakuten = [
 ];
 
 export const yoon = [
+  // Thanh âm (Seion) - Bạn đã có
   ["きゃ", "kya"],
   ["きゅ", "kyu"],
   ["きょ", "kyo"],
@@ -97,4 +98,20 @@ export const yoon = [
   ["りゃ", "rya"],
   ["りゅ", "ryu"],
   ["りょ", "ryo"],
+
+  // Âm đục (Dakuon) - Phần bổ sung
+  ["ぎゃ", "gya"],
+  ["ぎゅ", "gyu"],
+  ["ぎょ", "gyo"],
+  ["じゃ", "ja"],
+  ["じゅ", "ju"],
+  ["じょ", "jo"],
+  ["びゃ", "bya"],
+  ["びゅ", "byu"],
+  ["びょ", "byo"],
+  
+  // Âm bán đục (Handakuon) - Phần bổ sung
+  ["ぴゃ", "pya"],
+  ["ぴゅ", "pyu"],
+  ["ぴょ", "pyo"],
 ];

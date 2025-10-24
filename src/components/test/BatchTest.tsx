@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { allRadicals } from "../../pages/radicals"; // Chú ý đường dẫn có thể cần thay đổi
 import { base, dakuten, yoon } from "../../data/kana"; // Chú ý đường dẫn
 
@@ -33,6 +33,32 @@ function BatchTest() {
   const [endRange, setEndRange] = useState(10);
 
   const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
+
+  const testAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Hàm này sẽ được gọi mỗi khi có cú click chuột
+    const handleClickOutside = (event: MouseEvent) => {
+      // Nếu không có tooltip nào đang mở thì không làm gì cả
+      if (activeTooltipIndex === null) {
+        return;
+      }
+
+      // Kiểm tra xem ref đã được gán chưa và cú click có nằm ngoài phần tử được ref trỏ tới không
+      if (testAreaRef.current && !testAreaRef.current.contains(event.target as Node)) {
+        // Nếu click ra ngoài, đóng tooltip
+        setActiveTooltipIndex(null);
+      }
+    };
+
+    // Thêm event listener vào document
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Hàm dọn dẹp: gỡ bỏ event listener khi component unmount
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [activeTooltipIndex]); // Dependency array: useEffect sẽ chạy lại nếu activeTooltipIndex thay đổi
 
   const startTest = () => {
     let characterSet: [string, string][];
@@ -228,7 +254,7 @@ function BatchTest() {
                   {question.endsWith(".png") ? (
                     <img src={question} alt="radical" className="h-20 w-20 object-contain" />
                   ) : (
-                    <div className="text-6xl font-serif font-bold tracking-wider text-indigo-800">
+                    <div ref={testAreaRef}  className="text-6xl font-serif font-bold tracking-wider text-indigo-800">
                       {question}
                     </div>
                   )}

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { allRadicals } from "../../pages/radicals"; // Chú ý đường dẫn có thể cần thay đổi
-import { base, dakuten, yoon } from "../../data/kana"; // Chú ý đường dẫn
+import { base_hira, base_kata, dakuten, yoon } from "../../data/kana"; // Chú ý đường dẫn
 
 // Dán katakanaMap vào đây
 const katakanaMap = (hiragana: string) => {
@@ -66,11 +66,11 @@ function BatchTest() {
     if (testType === "radical") {
       characterSet = allRadicals.map((r) => [r.char, r.hanViet + ": " + r.meaning] as [string, string]);
     } else if (testType === "base") {
-      characterSet = base as [string, string][];
+      characterSet = [...base_kata, ...base_hira] as [string, string][];
     } else if (testType === "dakuten") {
-      characterSet = [...base, ...dakuten] as [string, string][];
+      characterSet = [...base_kata, ...base_hira, ...dakuten] as [string, string][];
     } else {
-      characterSet = [...base, ...dakuten, ...yoon] as [string, string][];
+      characterSet = [...base_kata, ...base_hira, ...dakuten, ...yoon] as [string, string][];
     }
 
     const safeCount = Math.min(count, characterSet.length);
@@ -108,10 +108,10 @@ function BatchTest() {
     testType === "radical"
       ? allRadicals
       : testType === "base"
-        ? base
+        ? base_hira
         : testType === "dakuten"
-          ? [...base, ...dakuten]
-          : [...base, ...dakuten, ...yoon];
+          ? [...base_hira, ...dakuten]
+          : [...base_hira, ...dakuten, ...yoon];
 
   const testTypeLabels: Record<TestType, string> = {
     radical: "Bộ thủ",

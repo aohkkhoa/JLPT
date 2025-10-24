@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { base, dakuten, yoon } from "../../data/kana"; // Chú ý đường dẫn
+import { base_hira, dakuten, yoon } from "../../data/kana"; // Chú ý đường dẫn
 
 // Các type, interface, và hàm tiện ích đã di chuyển cùng
 type KanaSet = "base" | "dakuten" | "yoon";
@@ -44,7 +44,7 @@ function QuizMode() {
 
   const startQuiz = () => {
     let characterSet: [string, string][] = [];
-    if (selectedSets.base) characterSet.push(...base as [string, string][]);
+    if (selectedSets.base) characterSet.push(...base_hira as [string, string][]);
     if (selectedSets.dakuten) characterSet.push(...dakuten as [string, string][]);
     if (selectedSets.yoon) characterSet.push(...yoon as [string, string][]);
 

@@ -36,6 +36,7 @@ export default function Header() {
     { name: "Bảng chữ cái", path: "/alphabet" },
     { name: "Từ vựng", path: "/vocabulary" },
     { name: "Ngữ pháp", path: "/grammar" },
+    { name: "Minna Nihongo", path: "/minnaNihongo1" },
     {
       name: "Kanji",
       path: "/kanji",

@@ -12,6 +12,7 @@ import Kanji from "./pages/Kanji";
 import Flashcard from "./pages/Flashcard";
 import Test from "./pages/Test";
 import RadicalsPage from "./pages/RadicalsPage";
+import MinnaNihongo1 from "./pages/MinnaNihongo";
 
 export default function App() {
   const location = useLocation();
@@ -37,6 +38,7 @@ export default function App() {
               <Route path="/flashcard" element={<Flashcard />} />
               <Route path="/radicals" element={<RadicalsPage />} />
               <Route path="/test" element={<Test />} />
+              <Route path="/minnaNihongo1" element={<MinnaNihongo1 />} />
             </Routes>
           </motion.div>
         </AnimatePresence>

@@ -6,6 +6,7 @@ import type { Transition } from 'framer-motion';
 // Đảm bảo đường dẫn này chính xác với cấu trúc project của bạn
 import { ALL_LESSONS_DATA } from '../data/minnaData';
 import type { GrammarPoint, VocabularyItem } from '../data/minnaData';
+import { speakJapanese } from '../utils/speech'; 
 // Định nghĩa kiểu cho loại nội dung, khớp với các key trong data
 type ContentType = 'grammar' | 'vocabulary';
 
@@ -37,65 +38,6 @@ const MinnaNihongoLessons: React.FC = () => {
   const contentTypeLabels: Record<ContentType, string> = {
     grammar: 'Ngữ pháp',
     vocabulary: 'Từ vựng',
-  };
-
-  const speakJapanese = (text: string) => {
-    if (!('speechSynthesis' in window)) {
-      alert('Rất tiếc, trình duyệt của bạn không hỗ trợ chức năng phát âm.');
-      return;
-    }
-
-    // Dừng âm thanh đang phát (nếu có)
-    window.speechSynthesis.cancel();
-
-    // Hàm này sẽ tìm và phát âm
-    const findAndSpeak = () => {
-      const voices = window.speechSynthesis.getVoices();
-
-      // Tìm một giọng đọc tiếng Nhật.
-      // Ưu tiên giọng của Google, sau đó đến các giọng khác.
-      let japaneseVoice = voices.find(voice => voice.lang === 'ja-JP' && voice.name.includes('Google'));
-      if (!japaneseVoice) {
-        japaneseVoice = voices.find(voice => voice.lang === 'ja-JP');
-      }
-
-      if (japaneseVoice) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.voice = japaneseVoice; // Chỉ định giọng đọc cụ thể
-        utterance.lang = 'ja-JP';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-      } else {
-        // Nếu không tìm thấy giọng đọc nào, thử phát âm mặc định
-        // Một số trình duyệt vẫn có thể đọc được dù không liệt kê giọng đọc
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ja-JP';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-
-        // Thông báo cho người dùng (chỉ thông báo một lần để tránh làm phiền)
-        if (!(window as any).hasShownVoiceWarning) {
-          setTimeout(() => {
-            if (!window.speechSynthesis.speaking) {
-              alert('Không tìm thấy gói giọng đọc tiếng Nhật trên trình duyệt này. Âm thanh có thể không chính xác.');
-              (window as any).hasShownVoiceWarning = true;
-            }
-          }, 1000);
-        }
-      }
-    };
-
-    // Vấn đề: getVoices() có thể trả về mảng rỗng lúc đầu.
-    // Chúng ta cần chờ sự kiện 'voiceschanged'.
-    if (window.speechSynthesis.getVoices().length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        findAndSpeak();
-        // Gỡ bỏ event listener sau lần chạy đầu tiên để tránh gọi lại nhiều lần
-        window.speechSynthesis.onvoiceschanged = null;
-      };
-    } else {
-      findAndSpeak();
-    }
   };
 
   // --- CÁC HÀM XỬ LÝ SỰ KIỆN ---

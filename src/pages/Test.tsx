@@ -1,7 +1,10 @@
+// src/pages/TestPage.tsx (đã cập nhật)
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import BatchTest from "../components/test/BatchTest";
-import QuizMode from "../components/test/QuizMode";
+// --- THAY ĐỔI Ở ĐÂY ---
+import QuizPage from "./QuizPlayer"; // Import component mới
 
 export default function TestPage() {
   const [quizMode, setQuizMode] = useState<"batch" | "quiz">("batch");
@@ -9,6 +12,7 @@ export default function TestPage() {
   return (
     <div className="min-h-[calc(100vh-88px)] bg-gradient-to-b from-sky-50 via-pink-50 to-indigo-50 flex flex-col items-center p-4 pt-8">
       <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-xl max-w-4xl w-full text-center">
+        {/* ... phần JSX cho các nút chuyển đổi không thay đổi ... */}
         <div className="flex justify-center border-b mb-6">
           <button
             onClick={() => setQuizMode("batch")}
@@ -38,7 +42,8 @@ export default function TestPage() {
           </button>
         </div>
 
-        {quizMode === "batch" ? <BatchTest /> : <QuizMode />}
+        {/* --- THAY ĐỔI Ở ĐÂY --- */}
+        {quizMode === "batch" ? <BatchTest /> : <QuizPage />}
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import { ALL_LESSONS_DATA } from "../data/minnaData";
 /**
  * Trộn mảng (Fisher–Yates)
  */
-function shuffle<T>(arr: T[], seed?: number): T[] {
+function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

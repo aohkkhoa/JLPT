@@ -1,61 +1,50 @@
-// src/components/quiz/QuizPlayer.tsx
-import { useState, useEffect, useRef } from "react";
+// src/components/quiz/KanaTypingQuestion.tsx
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import type { QuizHistoryItem } from "../../types/quiz";
+import type { Question, QuizHistoryItem } from "../../types/quiz";
 
-interface QuizPlayerProps {
-  question: string; // nội dung hiển thị (ví dụ kana hoặc câu hỏi)
-  answer: string; // đáp án đúng (romaji) — dùng để hiển thị khi sai
+interface KanaTypingQuestionProps {
+  questionData: Question;
   questionNumber: number;
   totalQuestions: number;
   score: number;
-  // Khi user submit, component chỉ gửi chuỗi đã chuẩn hóa (romaji) lên parent/hook
-  onAnswer: (userAnswer: string) => void;
-  onNext: () => void;
-  // Parent sẽ truyền xuống để đồng bộ UI
-  isAnswered: boolean;
-  result: QuizHistoryItem | null;
+  onAnswer: (userAnswer: string) => void; // gửi romaji đã chuẩn hoá lên parent/hook
+  timeLeft: number | null;
+  isAnswered: boolean; // parent báo đã trả lời cho câu này chưa
+  result: QuizHistoryItem | null; // lịch sử cho câu hiện tại (nếu có)
 }
 
 /**
- * QuizPlayer
- * Component đơn giản cho dạng quiz 1 ô (romaji)
- *
- * Quy tắc:
- * - Không tự quyết định đúng/sai, parent (hook) là nguồn chân thực (single source of truth)
- * - Khi gửi đáp án, component đặt pendingSubmit = true để tránh double submit
- * - Khi question thay đổi (câu mới), component reset input & pendingSubmit
- *
- * Chú thích: toàn bộ comment bằng tiếng Việt
+ * KanaTypingQuestion
+ * - Dùng cho dạng kiểm tra kana (1 ô romaji)
+ * - Không tự chấm; parent (hook) là nguồn chân thực (isAnswered/result)
+ * - Ghi chú toàn bộ bằng tiếng Việt
  */
-export default function QuizPlayer({
-  question,
-  answer,
+export default function KanaTypingQuestion({
+  questionData,
   questionNumber,
   totalQuestions,
   score,
   onAnswer,
-  onNext,
+  timeLeft,
   isAnswered,
   result,
-}: QuizPlayerProps) {
+}: KanaTypingQuestionProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // input local của người dùng
+  // input của user (romaji)
   const [userAnswer, setUserAnswer] = useState<string>("");
 
-  // cờ để tránh gửi nhiều lần trước khi parent cập nhật lịch sử
+  // pending để tránh double submit trước khi parent xử lý
   const [pendingSubmit, setPendingSubmit] = useState<boolean>(false);
-
-  // rollback timeout id (nếu parent không phản hồi trong 5s thì reset pending)
   const rollbackRef = useRef<number | null>(null);
 
-  // focus input khi chuyển câu (questionNumber thay đổi)
+  // focus mỗi khi chuyển câu
   useEffect(() => {
     inputRef.current?.focus();
   }, [questionNumber]);
 
-  // reset internal states khi câu hỏi thay đổi
+  // reset khi questionData thay đổi
   useEffect(() => {
     setUserAnswer("");
     setPendingSubmit(false);
@@ -63,22 +52,21 @@ export default function QuizPlayer({
       clearTimeout(rollbackRef.current);
       rollbackRef.current = null;
     }
-  }, [question]);
+    inputRef.current?.focus();
+  }, [questionData]);
 
-  // normalized boolean: parent có thể đã trả về result hoặc chỉ báo isAnswered
+  // Lấy trạng thái đúng/sai từ prop result (nếu có)
   const isCorrect = result ? result.isCorrect : null;
 
-  // xử lý gửi (Enter hoặc click)
+  // Xử lý submit (Enter hoặc click)
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    // Nếu parent đã báo là answered -> hành động của nút/enter là next
+    // Nếu parent đã báo answered => nút/Enter lúc này đóng vai trò next, component này chỉ gửi lên parent
     if (isAnswered) {
-      onNext();
       return;
     }
 
-    // Nếu đang gửi rồi thì ignore
     if (pendingSubmit) return;
 
     const normalized = userAnswer.toLowerCase().trim();
@@ -87,13 +75,12 @@ export default function QuizPlayer({
     try {
       onAnswer(normalized);
 
-      // rollback phòng hờ parent không cập nhật (5s)
+      // rollback phòng hờ parent không cập nhật trong 5s
       rollbackRef.current = window.setTimeout(() => {
         setPendingSubmit(false);
         rollbackRef.current = null;
       }, 5000);
     } catch (err) {
-      // nếu onAnswer ném lỗi, rollback ngay
       setPendingSubmit(false);
       if (rollbackRef.current) {
         clearTimeout(rollbackRef.current);
@@ -115,7 +102,22 @@ export default function QuizPlayer({
       </div>
 
       <div className="bg-white p-8 rounded-2xl shadow-inner text-center">
-        <div className="text-8xl font-bold text-indigo-700 mb-6 break-words">{question}</div>
+        {/* Hiển thị ký tự kana hoặc văn bản question */}
+        <div className="text-8xl font-bold text-indigo-700 mb-6 break-words">
+          {questionData.questionText}
+        </div>
+
+        {timeLeft !== null && (
+          <div className="text-center mb-4">
+            <p
+              className={`font-bold text-2xl transition-colors ${
+                timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-gray-700"
+              }`}
+            >
+              {timeLeft}
+            </p>
+          </div>
+        )}
 
         <form onSubmit={(e) => handleSubmit(e)}>
           <input
@@ -155,18 +157,13 @@ export default function QuizPlayer({
                 ? "Đã gửi — chờ kết quả..."
                 : isCorrect
                 ? "Chính xác!"
-                : `Sai rồi! Đáp án đúng là: ${answer}`}
+                : `Sai rồi! Đáp án đúng là: ${questionData.correctAnswers.romaji}`}
             </div>
 
             {pendingSubmit && <p className="text-center text-gray-500">Đang gửi kết quả...</p>}
 
             <div className="mt-2">
-              <button
-                onClick={() => onNext()}
-                className="w-full px-6 py-3 bg-sky-400 text-white rounded-full shadow hover:opacity-90 transition-all font-semibold"
-              >
-                {questionNumber === totalQuestions ? "Xem kết quả" : "Câu tiếp theo"}
-              </button>
+              <p className="text-center text-sm text-gray-500">Nhấn "Câu tiếp theo" hoặc chờ tự chuyển.</p>
             </div>
           </motion.div>
         ) : (

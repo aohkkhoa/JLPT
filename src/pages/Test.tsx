@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import BatchTest from "../components/test/BatchTest";
 // --- THAY ĐỔI Ở ĐÂY ---
-import QuizPage from "./QuizPlayer"; // Import component mới
+import QuizPage from "./QuizPage"; // Import component mới
 
 export default function TestPage() {
   const [quizMode, setQuizMode] = useState<"batch" | "quiz">("batch");

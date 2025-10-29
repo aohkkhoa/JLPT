@@ -1,56 +1,163 @@
 // src/utils/quizHelpers.ts
+// Các hàm tiện ích để sinh câu hỏi cho Quiz
+// Toàn bộ chú thích bằng tiếng Việt
 
-import { ALL_LESSONS_DATA } from '../data/minnaData'; // <-- Điều chỉnh đường dẫn nếu cần
-import type { Question } from '../hooks/useQuizEngine'; // <-- Điều chỉnh đường dẫn nếu cần
-     // <-- Điều chỉnh đường dẫn nếu cần
+import type { Question } from "../types/quiz";
+import { base_hira, dakuten, yoon } from "../data/kana";
+import { ALL_LESSONS_DATA } from "../data/minnaData";
 
 /**
- * Hàm xáo trộn một mảng (Fisher-Yates shuffle algorithm)
- * @param array Mảng cần xáo trộn
- * @returns Mảng đã được xáo trộn
+ * Trộn mảng (Fisher–Yates)
  */
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
+function shuffle<T>(arr: T[], seed?: number): T[] {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  return shuffled;
+  return a;
 }
 
 /**
- * Tạo ra các câu hỏi dạng VI -> JP Typing từ các bài học đã chọn.
- * @param selectedLessons Mảng các số thứ tự bài học (ví dụ: [1, 2, 5])
- * @param numQuestions Số lượng câu hỏi cần tạo
- * @returns Một mảng các câu hỏi
+ * Sinh câu hỏi cho KANA
+ *
+ * selectedSets: { base: boolean, dakuten: boolean, yoon: boolean }
+ * num: số câu hỏi mong muốn
+ *
+ * Trả về Question[] với:
+ * - questionText: ký tự kana (hiragana/katakana) để hiển thị
+ * - correctAnswers: { romaji, hiragana }
  */
-export function generateViToJpTypingQuestions(
-  selectedLessons: number[],
-  numQuestions: number
+export function generateKanaQuestions(
+  selectedSets: Record<"base" | "dakuten" | "yoon", boolean>,
+  num: number
 ): Question[] {
-  // 1. Tập hợp tất cả từ vựng từ các bài học đã chọn
-  let vocabularyPool: { jp: string; vi: string; }[] = [];
-  selectedLessons.forEach(lessonNumber => {
-    const lessonData = ALL_LESSONS_DATA[lessonNumber];
-    if (lessonData && lessonData.vocabulary) {
-      // Chỉ lấy các từ có nghĩa jp và vi
-      const validVocab = lessonData.vocabulary.map(v => ({ jp: v.romaji, vi: v.vi }));
-      vocabularyPool.push(...validVocab);
-    }
-  });
-  
-  // 2. Xáo trộn toàn bộ bộ từ vựng đã tập hợp
-  const shuffledPool = shuffleArray(vocabularyPool);
+  const pool: [string, string][] = [];
 
-  // 3. Lấy ra số lượng câu hỏi cần thiết
-  const questionCount = Math.min(numQuestions, shuffledPool.length);
-  const selectedVocab = shuffledPool.slice(0, questionCount);
+  // mỗi file data kỳ vọng dạng array [kanaChar, romaji]
+  if (selectedSets.base) pool.push(...(base_hira as [string, string][]));
+  if (selectedSets.dakuten) pool.push(...(dakuten as [string, string][]));
+  if (selectedSets.yoon) pool.push(...(yoon as [string, string][]));
 
-  // 4. Chuyển đổi chúng thành định dạng Question
-  const questions: Question[] = selectedVocab.map(vocab => ({
-    questionText: vocab.vi,       // Câu hỏi là tiếng Việt
-    correctAnswer: vocab.jp,    // Đáp án đúng là Romaji
+  if (pool.length === 0) return [];
+
+  const shuffled = shuffle(pool);
+  const slice = shuffled.slice(0, Math.min(num, shuffled.length));
+
+  return slice.map(([kana, romaji]) => ({
+    questionText: kana,
+    correctAnswers: {
+      romaji,
+      hiragana: kana,
+    },
+    type: "TYPING",
   }));
+}
 
-  return questions;
+/**
+ * Hàm trả về phản hồi (feedback) dựa trên điểm phần trăm
+ * @param score - điểm số phần trăm (0–100)
+ * @returns Object gồm message (nội dung) và color (class màu)
+ */
+export function getFeedback(score: number): { message: string; color: string } {
+  if (score === 100) {
+    return { message: "Hoàn hảo! Bạn làm đúng tất cả 🎉", color: "text-green-500" };
+  }
+  if (score >= 90) {
+    return { message: "Rất tốt! Gần như hoàn hảo 💪", color: "text-emerald-500" };
+  }
+  if (score >= 70) {
+    return { message: "Tốt rồi! Hãy luyện thêm một chút nhé 👍", color: "text-sky-500" };
+  }
+  if (score >= 50) {
+    return { message: "Ổn, nhưng cần ôn lại thêm 👀", color: "text-yellow-500" };
+  }
+  return { message: "Hãy thử lại nhé! Bạn sẽ tiến bộ nhanh thôi 💡", color: "text-red-500" };
+}
+
+
+/**
+ * Sinh câu hỏi dạng VI -> JP (typing) từ dữ liệu ALL_LESSONS_DATA (phiên bản mới)
+ *
+ * - selectedLessons: mảng số bài (ví dụ [1,2,3]); nếu rỗng/undefined => dùng tất cả bài
+ * - num: tổng số câu muốn sinh
+ *
+ * Lưu ý:
+ * - Nếu một mục vocabulary không có romaji thì sẽ bị bỏ qua (không thể chấm)
+ * - Nếu không có hira, hàm sẽ dùng item.jp làm fallback cho hira
+ */
+export function generateViToJpTypingQuestions(selectedLessons: number[] = [], num: number): Question[] {
+  const pool: {
+    vi: string;
+    jp: string;
+    hira: string;
+    romaji: string;
+    kanji?: string;
+  }[] = [];
+
+  const skipped: { lesson: number; item: any; reason: string }[] = [];
+
+  const lessonsToUse = (selectedLessons && selectedLessons.length > 0)
+    ? selectedLessons
+    : Object.keys(ALL_LESSONS_DATA).map(Number);
+
+
+  for (const n of lessonsToUse) {
+    const lesson = (ALL_LESSONS_DATA as any)[n];
+    if (!lesson || !lesson.vocabulary || !Array.isArray(lesson.vocabulary)) {
+      continue;
+    }
+
+    for (const item of lesson.vocabulary) {
+      // item kỳ vọng có: jp, romaji, vi
+      if (!item) {
+        skipped.push({ lesson: n, item, reason: "item is falsy" });
+        continue;
+      }
+
+      // Nếu không có romaji thì skip (theo logic hiện tại) — ghi lại để debug
+      if (!item.romaji) {
+        skipped.push({ lesson: n, item, reason: "missing romaji" });
+        continue;
+      }
+
+      const romajiNorm = String(item.romaji).toLowerCase().trim().replace(/\s+/g, " ");
+      const hira = (item as any).hira ? String((item as any).hira).trim() : String(item.jp ?? "").trim();
+
+      pool.push({
+        vi: String(item.vi ?? "").trim(),
+        jp: String(item.jp ?? "").trim(),
+        hira,
+        romaji: romajiNorm,
+        kanji: item.kanji ? String(item.kanji).trim() : undefined,
+      });
+    }
+  }
+
+
+  if (skipped.length > 0) {
+    // in vài mẫu item bị skip (tối đa 10) để bạn kiểm tra dữ liệu
+    console.log("[quizHelpers] skipped samples (up to 10):", skipped.slice(0, 10));
+  }
+
+  if (pool.length === 0) {
+    console.warn("[quizHelpers] pool rỗng — không thể sinh câu hỏi (hãy kiểm tra ALL_LESSONS_DATA, romaji bị thiếu?)");
+    return [];
+  }
+
+  const shuffled = shuffle(pool);
+  const slice = shuffled.slice(0, Math.min(num, shuffled.length));
+
+  // LOG: báo số câu cuối cùng trả về
+  console.log(`[quizHelpers] returning ${slice.length} questions (requested ${num})`);
+
+  return slice.map((entry) => ({
+    questionText: entry.vi || entry.jp || entry.romaji,
+    correctAnswers: {
+      romaji: entry.romaji,
+      hiragana: entry.hira || "",
+      kanji: entry.kanji,
+    },
+    type: "TYPING",
+  }));
 }

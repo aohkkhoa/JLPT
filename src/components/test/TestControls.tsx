@@ -39,14 +39,6 @@ export default function TestControls({
   const [startRange, setStartRange] = React.useState<number>(initialStart);
   const [endRange, setEndRange] = React.useState<number>(initialEnd);
 
-  // Dùng memo để tránh gọi buildCharacterSet nặng nhiều lần
-  const totalCount = useMemo(() => {
-    // NOTE: sử dụng buildCharacterSet từ utils không export ở đây,
-    // nên đơn giản lấy estimate bằng generateBatchQuestions với count = large
-    // nhưng để tránh import lại, bạn có thể pass max từ parent.
-    return 9999; // nếu muốn cụ thể, parent có thể truyền max
-  }, [testType]);
-
   const labels: Record<TestType, string> = {
     radical: "Bộ thủ",
     base: "Cơ bản",

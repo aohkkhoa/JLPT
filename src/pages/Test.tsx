@@ -12,11 +12,13 @@ export default function TestPage() {
   return (
     <div className="min-h-[calc(100vh-88px)] bg-gradient-to-b from-sky-50 via-pink-50 to-indigo-50 flex flex-col items-center p-4 pt-8">
       <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-xl max-w-4xl w-full text-center">
-        {/* ... phần JSX cho các nút chuyển đổi không thay đổi ... */}
+        {/* --- Nút chuyển giữa hai chế độ --- */}
         <div className="flex justify-center border-b mb-6">
           <button
             onClick={() => setQuizMode("batch")}
-            className={`px-6 py-2 font-semibold text-gray-600 relative transition-colors ${quizMode === "batch" ? "text-indigo-600" : "hover:text-indigo-500"
+            className={`px-6 py-2 font-semibold text-gray-600 relative transition-colors ${quizMode === "batch"
+                ? "text-indigo-600"
+                : "hover:text-indigo-500"
               }`}
           >
             Luyện tập
@@ -27,9 +29,12 @@ export default function TestPage() {
               />
             )}
           </button>
+
           <button
             onClick={() => setQuizMode("quiz")}
-            className={`px-6 py-2 font-semibold text-gray-600 relative transition-colors ${quizMode === "quiz" ? "text-indigo-600" : "hover:text-indigo-500"
+            className={`px-6 py-2 font-semibold text-gray-600 relative transition-colors ${quizMode === "quiz"
+                ? "text-indigo-600"
+                : "hover:text-indigo-500"
               }`}
           >
             Kiểm tra tính điểm
@@ -42,8 +47,22 @@ export default function TestPage() {
           </button>
         </div>
 
-        {/* --- THAY ĐỔI Ở ĐÂY --- */}
-        {quizMode === "batch" ? <BatchTest /> : <QuizPage />}
+        {/* --- Hai chế độ hiển thị song song (ẩn/hiện bằng CSS) --- */}
+        <div className="relative w-full">
+          <div
+            className={`transition-opacity duration-300 ${quizMode === "batch" ? "opacity-100" : "opacity-0 hidden"
+              }`}
+          >
+            <BatchTest />
+          </div>
+
+          <div
+            className={`transition-opacity duration-300 ${quizMode === "quiz" ? "opacity-100" : "opacity-0 hidden"
+              }`}
+          >
+            <QuizPage />
+          </div>
+        </div>
       </div>
     </div>
   );

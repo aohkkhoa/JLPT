@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { allRadicals } from './radicals'; // Điều chỉnh đường dẫn nếu cần
-import type { Radical } from './radicals'; // Điều chỉnh đường dẫn nếu cần
+import { allRadicals } from '../data/radicals'; // Điều chỉnh đường dẫn nếu cần
+import type { Radical } from '../data/radicals'; // Điều chỉnh đường dẫn nếu cần
 
 // --- Icons cho các nút điều khiển ---
 const ShuffleIcon = () => (

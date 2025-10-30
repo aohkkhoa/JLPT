@@ -1,5 +1,5 @@
 // src/components/test/TestControls.tsx
-import React, { useMemo } from "react";
+import React from "react";
 import type { QAItem } from "../../utils/testHelpers";
 import { generateBatchQuestions } from "../../utils/testHelpers";
 

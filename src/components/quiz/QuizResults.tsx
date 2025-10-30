@@ -25,7 +25,15 @@ export default function QuizResults({ score, totalQuestions, history, onRestart,
     if (!answer || answer.trim() === "") return <span className="italic opacity-75">(bỏ trống)</span>;
     return <span>{answer}</span>;
   };
-
+  const getResultColor = (result: QuizHistoryItem) => {
+    if (result.timedOut && result.isCorrect) {
+      return "bg-yellow-100 border-yellow-400"; // 🟡 đúng nhưng hết giờ
+    }
+    if (result.isCorrect) {
+      return "bg-green-100 border-green-400"; // ✅ đúng
+    }
+    return "bg-red-100 border-red-400"; // ❌ sai
+  };
   // Hiển thị 1 phần (Romaji / Hiragana / Kanji) với màu dựa trên kết quả
   const renderPart = (label: string, userValue?: string | null, correctValue?: string | null, partResult?: boolean | null) => {
     const isChecked = partResult !== null && typeof partResult !== "undefined";
@@ -82,11 +90,18 @@ export default function QuizResults({ score, totalQuestions, history, onRestart,
             {history.map((item, idx) => (
               <div
                 key={idx}
-                className={`p-3 rounded-lg border ${item.isCorrect ? "border-green-200 bg-green-50/70" : "border-red-200 bg-red-50/70"}`}
+                className={`p-3 rounded-xl border-2 ${getResultColor(item)}`}
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-1">
-                    <span className={`text-2xl font-bold ${item.isCorrect ? "text-green-500" : "text-red-500"}`}>
+                    <span
+                      className={`text-2xl font-bold ${item.timedOut && item.isCorrect
+                          ? "text-yellow-500"
+                          : item.isCorrect
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }`}
+                    >
                       {item.isCorrect ? "✓" : "✗"}
                     </span>
                   </div>
@@ -108,21 +123,49 @@ export default function QuizResults({ score, totalQuestions, history, onRestart,
                     </p>
 
                     <div className="mt-2">
-                      {/* Hiển thị từng phần nếu có result cho phần đó */}
-                      {item.results.hiragana !== null && renderPart("Hiragana", item.userAnswer.hiragana, item.correctAnswer.hiragana, item.results.hiragana)}
-                      {item.results.romaji !== null && renderPart("Romaji", item.userAnswer.romaji, item.correctAnswer.romaji, item.results.romaji)}
-                      {typeof item.results.kanji !== "undefined" && item.results.kanji !== null && (
-                        renderPart("Kanji", item.userAnswer.kanji, item.correctAnswer.kanji ?? "", item.results.kanji)
-                      )}
+                      {item.results.hiragana !== null &&
+                        renderPart(
+                          "Hiragana",
+                          item.userAnswer.hiragana,
+                          item.correctAnswer.hiragana,
+                          item.results.hiragana
+                        )}
+                      {item.results.romaji !== null &&
+                        renderPart(
+                          "Romaji",
+                          item.userAnswer.romaji,
+                          item.correctAnswer.romaji,
+                          item.results.romaji
+                        )}
+                      {typeof item.results.kanji !== "undefined" &&
+                        item.results.kanji !== null &&
+                        renderPart(
+                          "Kanji",
+                          item.userAnswer.kanji,
+                          item.correctAnswer.kanji ?? "",
+                          item.results.kanji
+                        )}
 
-                      {/* Nếu không có phần nào được check (edge-case), show tóm tắt */}
-                      {item.results.hiragana === null && item.results.romaji === null && (typeof item.results.kanji === "undefined" || item.results.kanji === null) && (
-                        <div className="mt-1 text-sm text-gray-700">
-                          <span className="font-medium">Bạn trả lời: </span>
-                          <span className="font-semibold">
-                            {renderUserAnswer(item.userAnswer.romaji || item.userAnswer.hiragana || item.userAnswer.kanji)}
-                          </span>
-                        </div>
+                      {item.results.hiragana === null &&
+                        item.results.romaji === null &&
+                        (typeof item.results.kanji === "undefined" ||
+                          item.results.kanji === null) && (
+                          <div className="mt-1 text-sm text-gray-700">
+                            <span className="font-medium">Bạn trả lời: </span>
+                            <span className="font-semibold">
+                              {renderUserAnswer(
+                                item.userAnswer.romaji ||
+                                item.userAnswer.hiragana ||
+                                item.userAnswer.kanji
+                              )}
+                            </span>
+                          </div>
+                        )}
+
+                      {item.timedOut && (
+                        <p className="text-xs italic text-yellow-700 mt-1">
+                          (Trả lời khi hết giờ)
+                        </p>
                       )}
                     </div>
                   </div>

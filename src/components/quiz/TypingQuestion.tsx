@@ -19,7 +19,7 @@ interface TypingQuestionProps {
   };
   result: QuizHistoryItem | null;
   timeLeft: number | null;
-  onAnswer: (userAnswer: UserTypingAnswer) => void;
+  onAnswer: (userAnswer: UserTypingAnswer, meta?: { timeOut?: boolean }) => void;
   isLastQuestion?: boolean;
   isAnswered: boolean;
 }
@@ -53,6 +53,22 @@ export default function TypingQuestion({
   const romajiRef = useRef<HTMLInputElement | null>(null);
   const kanaRef = useRef<HTMLInputElement | null>(null);
   const kanjiRef = useRef<HTMLInputElement | null>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus mỗi khi có question mới
+  useEffect(() => {
+    setUserInputs({ romaji: '', hiragana: '', kanji: '' });
+    setTimeout(() => firstInputRef.current?.focus(), 100);
+  }, [questionData]);
+
+  // Khi timeLeft về 0 => submit tự động với meta.timeOut = true
+  useEffect(() => {
+    if (timeLeft === 0 && !isAnswered) {
+      // Gọi onAnswer với giá trị nhập hiện tại (bảo đảm lưu vào history)
+      onAnswer(userInputs, { timeOut: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft]);
 
   // reset input khi câu hỏi thay đổi
   useEffect(() => {

@@ -27,7 +27,7 @@ export const useQuizEngine = () => {
     const [quizState, setQuizState] = useState<"setup" | "playing" | "finished">("setup");
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-    const [,setScore] = useState<number>(0);
+    const [, setScore] = useState<number>(0);
     const [history, setHistory] = useState<QuizHistoryItem[]>([]);
 
     // Thời gian còn lại cho câu hiện tại (null = không có timer)
@@ -94,7 +94,8 @@ export const useQuizEngine = () => {
     // -------------------------
     const handleAnswer = useCallback((
         rawAnswer: string | Partial<UserTypingAnswer>,
-        settingsArg?: QuizSettings
+        settingsArg?: QuizSettings,
+        meta? :{timedOut?: boolean}
     ) => {
         const settings = settingsArg ?? quizSettings;
         if (!settings) {
@@ -165,7 +166,12 @@ export const useQuizEngine = () => {
             isFullyCorrect = ok;
         }
 
+        // Nếu là timeout nhưng user input đúng, ta ĐÁNH DẤU là đúng nhưng flagged timedOut
+        const wasTimedOut = !!(meta && meta.timedOut);
+        // Trong yêu cầu bạn muốn màu vàng khi timedOut nhưng input đúng
+        //  -> chúng ta vẫn coi isFullyCorrect là true nếu match, và lưu timedOut flag
         // Cập nhật điểm & history
+
         if (isFullyCorrect) {
             setScore(prev => prev + 1);
         }
@@ -177,6 +183,7 @@ export const useQuizEngine = () => {
             isCorrect: isFullyCorrect,
             results: answerResults,
             options: q.options,
+            timedOut: wasTimedOut ?? false,
         };
 
         answeredSetRef.current.add(idx);
@@ -253,7 +260,9 @@ export const useQuizEngine = () => {
                 if (prev <= 1) {
                     // Hết giờ: tự nộp một đáp án TIME_OUT (đánh dấu sai)
                     // Gọi handleAnswer với payload TIME_OUT
-                    handleAnswer({ romaji: "TIME_OUT", hiragana: "TIME_OUT", kanji: "" }, quizSettings);
+                    //code cũ: handleAnswer({ romaji: "TIME_OUT", hiragana: "TIME_OUT", kanji: "" }, quizSettings);
+                    //thiết bị UI sẽ nhận timeLeft === 0 và tự nộp với nội dung hiện có (để lưu đúng input).
+                    clearInterval(intervalId);  
                     return 0;
                 }
                 return prev - 1;

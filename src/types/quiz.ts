@@ -65,6 +65,7 @@ export interface QuizHistoryItem {
   isCorrect: boolean;
   results: TypingAnswerResult;
   options?: string[];
+  timedOut?: boolean;
 }
 
 /**

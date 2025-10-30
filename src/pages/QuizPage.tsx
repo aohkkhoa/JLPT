@@ -66,7 +66,7 @@ export default function QuizPage() {
           timeLeft={timeLeft}
           questionData={currentQuestion}
           typingSettings={lastQuizSettings.typingSettings}
-          onAnswer={(userAnswer: UserTypingAnswer) => handleAnswer(userAnswer, lastQuizSettings)}
+          onAnswer={(userAnswer: UserTypingAnswer, meta?: { timeOut?: boolean }) => handleAnswer(userAnswer, lastQuizSettings, meta?.timeOut ? { timedOut: true } : undefined  )}
           isLastQuestion={currentQuestionIndex === questions.length - 1}
           isAnswered={isCurrentQuestionAnswered} // <-- TRUYỀN PROP MỚI
           result={currentQuestionResult} // <-- TRUYỀN PROP MỚI
@@ -82,7 +82,7 @@ export default function QuizPage() {
         <KanaTypingQuestion
           timeLeft={timeLeft}
           questionData={currentQuestion}
-          onAnswer={(userAnswer: string) => handleAnswer({ romaji: userAnswer, hiragana: '', kanji: '' }, lastQuizSettings)}
+          onAnswer={(userAnswer: string, meta?: { timeOut?: boolean }) => handleAnswer({ romaji: userAnswer, hiragana: '', kanji: '' }, lastQuizSettings, meta?.timeOut ? { timedOut: true } : undefined  )}
           score={score}
           questionNumber={currentQuestionIndex + 1}
           totalQuestions={questions.length}

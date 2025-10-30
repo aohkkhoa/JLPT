@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { allRadicals } from "./radicals";
-import type { Radical } from "./radicals";
+import { allRadicals } from "../data/radicals";
+import type { Radical } from "../data/radicals";
 
 export default function RadicalsPage() {
   const [selected, setSelected] = useState<Radical | null>(null);

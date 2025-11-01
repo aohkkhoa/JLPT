@@ -6,6 +6,7 @@ import QuizSetup from '../components/quiz/QuizSetup';
 import QuizResults from '../components/quiz/QuizResults';
 import TypingQuestion from '../components/quiz/TypingQuestion'; // <-- IMPORT MỚI
 import KanaTypingQuestion from '../components/quiz/KanaTypingQuestion'; // <-- IMPORT MỚI
+import McqQuestion from '../components/quiz/McqQuestion';
 import type { QuizSettings, UserTypingAnswer } from '../types/quiz';
 
 export default function QuizPage() {
@@ -20,6 +21,7 @@ export default function QuizPage() {
     currentQuestionResult,
     startQuiz,
     handleAnswer,
+    handleMcqAnswer,
     resetToSetup,
   } = useQuizEngine();
 
@@ -53,6 +55,7 @@ export default function QuizPage() {
         history={history}
         onRestart={handleRestartWithSameSettings}
         onNewSetup={resetToSetup}
+        correctButTimedOut={history.filter(item => item.isCorrect && item.timedOut).length} // Đếm số câu đúng nhưng hết giờ
       />
     );
   }
@@ -66,7 +69,7 @@ export default function QuizPage() {
           timeLeft={timeLeft}
           questionData={currentQuestion}
           typingSettings={lastQuizSettings.typingSettings}
-          onAnswer={(userAnswer: UserTypingAnswer, meta?: { timeOut?: boolean }) => handleAnswer(userAnswer, lastQuizSettings, meta?.timeOut ? { timedOut: true } : undefined  )}
+          onAnswer={(userAnswer: UserTypingAnswer, meta?: { timeOut?: boolean }) => handleAnswer(userAnswer, lastQuizSettings, meta?.timeOut ? { timedOut: true } : undefined)}
           isLastQuestion={currentQuestionIndex === questions.length - 1}
           isAnswered={isCurrentQuestionAnswered} // <-- TRUYỀN PROP MỚI
           result={currentQuestionResult} // <-- TRUYỀN PROP MỚI
@@ -82,7 +85,7 @@ export default function QuizPage() {
         <KanaTypingQuestion
           timeLeft={timeLeft}
           questionData={currentQuestion}
-          onAnswer={(userAnswer: string, meta?: { timeOut?: boolean }) => handleAnswer({ romaji: userAnswer, hiragana: '', kanji: '' }, lastQuizSettings, meta?.timeOut ? { timedOut: true } : undefined  )}
+          onAnswer={(userAnswer: string, meta?: { timeOut?: boolean }) => handleAnswer({ romaji: userAnswer, hiragana: '', kanji: '' }, lastQuizSettings, meta?.timeOut ? { timedOut: true } : undefined)}
           score={score}
           questionNumber={currentQuestionIndex + 1}
           totalQuestions={questions.length}
@@ -93,7 +96,23 @@ export default function QuizPage() {
     }
 
     // Sau này sẽ thêm các dạng MCQ ở đây
-    // if (lastQuizSettings.quizFormat === 'JP_TO_VI_MCQ') { ... }
+    if (lastQuizSettings.quizType === 'VOCABULARY' && (lastQuizSettings as any).quizFormat === 'JP_TO_VI_MCQ') {
+      return (
+        <McqQuestion
+          timeLeft={timeLeft}
+          questionData={currentQuestion}
+          onAnswer={(selected: string, meta?: { timeOut?: boolean }) => handleMcqAnswer(selected, lastQuizSettings, meta?.timeOut ? { timedOut: true } : undefined)}
+          isAnswered={isCurrentQuestionAnswered}
+          // result can be used by MCQ component later
+          currentResult={currentQuestionResult ? {
+            correctAnswer: currentQuestionResult.correctAnswer?.romaji ?? "", // correctVi was stored in romaji field
+            userAnswer: currentQuestionResult.userAnswer?.romaji ?? "",
+            timedOut: !!currentQuestionResult.timedOut,
+          }
+            : null}
+        />
+      );
+    }
   }
 
   return <div>Đang tải bài kiểm tra...</div>;

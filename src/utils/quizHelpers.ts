@@ -161,3 +161,63 @@ export function generateViToJpTypingQuestions(selectedLessons: number[] = [], nu
     type: "TYPING",
   }));
 }
+
+/**
+ * Sinh câu hỏi dạng JP -> VI (MCQ)
+ * - Hiển thị chữ/kanji/kana tiếng Nhật (entry.jp)
+ * - Tạo 4 đáp án tiếng Việt, bao gồm 1 đáp án đúng và 3 distractor ngẫu nhiên
+ */
+export function generateJpToViMcqQuestions(selectedLessons: number[] = [], num: number): Question[] {
+  const pool: { vi: string; jp: string; hira: string; romaji: string; kanji?: string }[] = [];
+
+  const lessonsToUse = (selectedLessons && selectedLessons.length > 0)
+    ? selectedLessons
+    : Object.keys(ALL_LESSONS_DATA).map(Number);
+
+  for (const n of lessonsToUse) {
+    const lesson = (ALL_LESSONS_DATA as any)[n];
+    if (!lesson || !lesson.vocabulary || !Array.isArray(lesson.vocabulary)) continue;
+
+    for (const item of lesson.vocabulary) {
+      if (!item) continue;
+      if (!item.vi) continue; // cần có nghĩa tiếng Việt để làm options
+      if (!item.jp) continue;
+      // romaji/hira optional
+      pool.push({
+        vi: String(item.vi ?? "").trim(),
+        jp: String(item.jp ?? "").trim(),
+        hira: item.hira ? String(item.hira).trim() : String(item.jp ?? "").trim(),
+        romaji: item.romaji ? String(item.romaji).toLowerCase().trim() : "",
+        kanji: item.kanji ? String(item.kanji).trim() : undefined,
+      });
+    }
+  }
+
+  if (pool.length === 0) {
+    console.warn('[quizHelpers] pool rỗng cho JP->VI MCQ');
+    return [];
+  }
+
+  const shuffled = shuffle(pool);
+  const slice = shuffled.slice(0, Math.min(num, shuffled.length));
+
+  // For distractors, use the whole pool's vi values
+  const allVi = pool.map(p => p.vi);
+
+  return slice.map((entry) => {
+    // pick up to 3 unique distractors that are != entry.vi
+    const distractors = shuffle(allVi.filter(v => v !== entry.vi)).slice(0, 3);
+    const options = shuffle([entry.vi, ...distractors]);
+
+    return {
+      questionText: entry.jp,
+      correctAnswers: {
+        romaji: entry.romaji,
+        hiragana: entry.hira,
+        kanji: entry.kanji,
+      },
+      options,
+      type: "MCQ",
+    } as Question;
+  });
+}

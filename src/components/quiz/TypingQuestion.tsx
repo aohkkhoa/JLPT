@@ -254,9 +254,8 @@ export default function TypingQuestion({
         <button
           onClick={() => handleSubmit()}
           disabled={isAnswered || pendingSubmit}
-          className={`w-full px-6 py-4 rounded-full shadow-lg transition-all font-bold text-lg ${
-            isAnswered || pendingSubmit ? "bg-gray-400 text-white cursor-not-allowed" : "bg-sky-500 text-white hover:bg-sky-600"
-          }`}
+          className={`w-full px-6 py-4 rounded-full shadow-lg transition-all font-bold text-lg ${isAnswered || pendingSubmit ? "bg-gray-400 text-white cursor-not-allowed" : "bg-sky-500 text-white hover:bg-sky-600"
+            }`}
         >
           {pendingSubmit ? "Đang kiểm tra..." : isAnswered ? "Đang chuyển câu..." : "Kiểm tra"}
         </button>

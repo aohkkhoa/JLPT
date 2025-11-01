@@ -8,6 +8,7 @@ interface QuizResultsProps {
   history: QuizHistoryItem[];
   onRestart: () => void; // bắt đầu lại với cài đặt cũ
   onNewSetup: () => void; // quay về màn hình cài đặt mới
+  correctButTimedOut: number; // số câu đúng nhưng hết giờ
 }
 
 /**
@@ -18,6 +19,8 @@ interface QuizResultsProps {
 export default function QuizResults({ score, totalQuestions, history, onRestart, onNewSetup }: QuizResultsProps) {
   const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
   const feedback = getFeedback(percentage);
+  const correctButTimedOut = history.filter(item => item.isCorrect && item.timedOut).length;
+
 
   // Hiển thị giá trị người dùng trả lời (xử lý TIME_OUT / rỗng)
   const renderUserAnswer = (answer?: string | null) => {
@@ -64,7 +67,12 @@ export default function QuizResults({ score, totalQuestions, history, onRestart,
       </p>
 
       <p className={`text-lg font-semibold mb-6 ${feedback.color}`}>{feedback.message}</p>
-
+      {/* Thêm dòng thông tin chi tiết */}
+      {correctButTimedOut > 0 && (
+        <p className="text-yellow-600 mt-2 font-medium">
+          ⚠️ Có {correctButTimedOut} câu đúng nhưng hết giờ – không được tính điểm.
+        </p>
+      )}
       <div className="flex justify-center gap-4 mb-6">
         <button
           onClick={onRestart}
@@ -96,10 +104,10 @@ export default function QuizResults({ score, totalQuestions, history, onRestart,
                   <div className="flex-shrink-0 mt-1">
                     <span
                       className={`text-2xl font-bold ${item.timedOut && item.isCorrect
-                          ? "text-yellow-500"
-                          : item.isCorrect
-                            ? "text-green-500"
-                            : "text-red-500"
+                        ? "text-yellow-500"
+                        : item.isCorrect
+                          ? "text-green-500"
+                          : "text-red-500"
                         }`}
                     >
                       {item.isCorrect ? "✓" : "✗"}

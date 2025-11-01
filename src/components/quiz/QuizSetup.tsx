@@ -40,6 +40,8 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
     checkKanji: false,
   });
 
+  const [vocabFormat, setVocabFormat] = useState<'VI_TO_JP_TYPING' | 'JP_TO_VI_MCQ'>('VI_TO_JP_TYPING');
+
   // --- Handlers ---
   const toggleKanaSet = (key: KanaSet) => {
     setSelectedKanaSets((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -87,8 +89,8 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
         quizType: "VOCABULARY",
         numQuestions: Math.max(1, Math.floor(numQuestions)),
         selectedLessons,
-        quizFormat: "VI_TO_JP_TYPING",
-        typingSettings: typingChecks,
+        quizFormat: vocabFormat,
+        ...(vocabFormat === 'VI_TO_JP_TYPING' ? { typingSettings: typingChecks } : {}),
         difficulty,
       };
       onStart(settings);
@@ -174,6 +176,23 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
         </div>
       ) : (
         <>
+          <div className="mb-4">
+            <label className="block text-md font-semibold text-gray-700 mb-2">Định dạng bài Từ vựng</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setVocabFormat('VI_TO_JP_TYPING')}
+                className={`flex-1 p-2 rounded-lg ${vocabFormat === 'VI_TO_JP_TYPING' ? 'bg-sky-500 text-white' : 'bg-gray-100'}`}
+              >
+                Gõ (VI → JP)
+              </button>
+              <button
+                onClick={() => setVocabFormat('JP_TO_VI_MCQ')}
+                className={`flex-1 p-2 rounded-lg ${vocabFormat === 'JP_TO_VI_MCQ' ? 'bg-sky-500 text-white' : 'bg-gray-100'}`}
+              >
+                Trắc nghiệm (JP → VI)
+              </button>
+            </div>
+          </div>
           <div className="mb-6">
             <label className="block text-lg font-semibold text-gray-700 mb-3">Chọn bài học</label>
             <div className="grid grid-cols-5 gap-2 max-h-48 overflow-y-auto p-2 border rounded-lg">

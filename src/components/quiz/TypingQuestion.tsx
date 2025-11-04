@@ -22,6 +22,8 @@ interface TypingQuestionProps {
   onAnswer: (userAnswer: UserTypingAnswer, meta?: { timeOut?: boolean }) => void;
   isLastQuestion?: boolean;
   isAnswered: boolean;
+  onNext?: () => void;
+  allowEnterAdvanceOnAnswered?: boolean;
 }
 
 /**
@@ -37,6 +39,8 @@ export default function TypingQuestion({
   timeLeft,
   onAnswer,
   isAnswered,
+  onNext,
+  allowEnterAdvanceOnAnswered
 }: TypingQuestionProps) {
   // local inputs người dùng
   const [userInputs, setUserInputs] = useState<UserTypingAnswer>({
@@ -181,7 +185,18 @@ export default function TypingQuestion({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => {
+          if (isAnswered) {
+            if (allowEnterAdvanceOnAnswered && typeof onNext === "function") {
+              e.preventDefault();
+              onNext();
+              return;
+            }
+            e.preventDefault();
+            return;
+          }
+          handleSubmit(e);
+        }} className="space-y-4">
           {typingSettings.checkHiragana && (
             <div>
               <label htmlFor="hiragana-input" className="block text-left font-medium text-gray-700 mb-1">
@@ -250,14 +265,30 @@ export default function TypingQuestion({
         </form>
       </div>
 
-      <div className="mt-4">
+       <div className="mt-4">
         <button
-          onClick={() => handleSubmit()}
-          disabled={isAnswered || pendingSubmit}
-          className={`w-full px-6 py-4 rounded-full shadow-lg transition-all font-bold text-lg ${isAnswered || pendingSubmit ? "bg-gray-400 text-white cursor-not-allowed" : "bg-sky-500 text-white hover:bg-sky-600"
-            }`}
+          onClick={() => {
+            // Nếu đã trả lời rồi thì nút này sẽ dùng để chuyển câu (nếu cho phép)
+            if (isAnswered) {
+              if (allowEnterAdvanceOnAnswered && typeof onNext === "function") {
+                onNext();
+              }
+              return;
+            }
+            // Nếu chưa trả lời thì hành vi như submit bình thường
+            handleSubmit();
+          }}
+          // Chỉ disable khi đang pending submit; cho phép bấm khi đã answered để advance
+          disabled={pendingSubmit}
+          className={`w-full px-6 py-4 rounded-full shadow-lg transition-all font-bold text-lg ${
+            pendingSubmit
+              ? "bg-gray-400 text-white cursor-not-allowed"
+              : isAnswered
+                ? "bg-sky-500 text-white hover:bg-sky-600" // khi đã answered, vẫn để nút nổi bật để user bấm chuyển
+                : "bg-sky-500 text-white hover:bg-sky-600"
+          }`}
         >
-          {pendingSubmit ? "Đang kiểm tra..." : isAnswered ? "Đang chuyển câu..." : "Kiểm tra"}
+          {pendingSubmit ? "Đang kiểm tra..." : isAnswered ? "Câu tiếp theo" : "Kiểm tra"}
         </button>
       </div>
     </div>

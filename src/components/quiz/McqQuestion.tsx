@@ -12,6 +12,8 @@ interface McqQuestionProps {
     userAnswer?: string; // what user selected (vi)
     timedOut?: boolean;
   } | null;
+  onNext?: () => void;
+  allowEnterAdvanceOnAnswered?: boolean;
 }
 
 export default function McqQuestion({
@@ -20,6 +22,8 @@ export default function McqQuestion({
   onAnswer,
   isAnswered,
   currentResult = null,
+  onNext,
+  allowEnterAdvanceOnAnswered = false,
 }: McqQuestionProps) {
   const options = Array.isArray(questionData?.options) ? questionData.options : [];
   const [localSelectedIdx, setLocalSelectedIdx] = useState<number | null>(null);
@@ -32,11 +36,23 @@ export default function McqQuestion({
   }, [questionData, isAnswered]);
 
   const handleSelect = (idx: number) => {
-    if (isAnswered || localDisabled) return;
+    // Nếu đã được parent đánh dấu là answered:
+    if (isAnswered) {
+      // Chỉ advance khi chế độ easy (được truyền qua prop allowEnterAdvanceOnAnswered)
+      if (allowEnterAdvanceOnAnswered && typeof onNext === "function") {
+        onNext();
+      }
+      return;
+    }
+
+    // Nếu chưa answered, bảo vệ double click bằng localDisabled
+    if (localDisabled) return;
+
     setLocalSelectedIdx(idx);
-    setLocalDisabled(true); // disable instantly to avoid double clicks
+    setLocalDisabled(true); // disable ngay để tránh double clicks trước khi parent phản hồi
     onAnswer(options[idx]);
   };
+
 
   // helper: determine classes when showing result
   const getOptionClasses = (opt: string, idx: number) => {
@@ -100,7 +116,7 @@ export default function McqQuestion({
             <button
               key={idx}
               onClick={() => handleSelect(idx)}
-              disabled={isAnswered || localDisabled}
+              disabled={localDisabled}
               aria-pressed={localSelectedIdx === idx}
               className={getOptionClasses(opt, idx)}
             >

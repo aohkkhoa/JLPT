@@ -12,6 +12,8 @@ interface McqQuestionProps {
     userAnswer?: string; // what user selected (vi)
     timedOut?: boolean;
   } | null;
+  onNext?: () => void;
+  allowEnterAdvanceOnAnswered?: boolean;
 }
 
 export default function McqQuestion({

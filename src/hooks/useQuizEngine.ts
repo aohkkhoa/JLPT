@@ -365,9 +365,12 @@ export const useQuizEngine = () => {
     // -------------------------
     useEffect(() => {
         if (quizState !== "playing") return;
-
+    
+        // Nếu không có quizSettings hoặc không phải hard thì KHÔNG auto-advance
+        if (!quizSettings || quizSettings.difficulty !== "hard") return;
+    
         if (history.length === currentQuestionIndex + 1) {
-            console.log(`[useQuizEngine] auto-advance check: idx=${currentQuestionIndex}, historyLength=${history.length}, questionsLen=${questions.length}`);
+            console.log(`[useQuizEngine] auto-advance check (hard mode): idx=${currentQuestionIndex}, historyLength=${history.length}, questionsLen=${questions.length}`);
             const t = setTimeout(() => {
                 // Nếu chưa là câu cuối thì next, nếu là cuối, set finished (handleNext sẽ làm)
                 if (currentQuestionIndex < questions.length - 1) {
@@ -379,7 +382,7 @@ export const useQuizEngine = () => {
             }, 1200);
             return () => clearTimeout(t);
         }
-    }, [history.length, currentQuestionIndex, quizState, handleNext, questions.length]);
+    }, [history.length, currentQuestionIndex, quizState, handleNext, questions.length, quizSettings]);
 
     /**
     * ADDED: Parent-driven timeout handling

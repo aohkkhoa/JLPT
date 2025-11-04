@@ -22,6 +22,8 @@ interface TypingQuestionProps {
   onAnswer: (userAnswer: UserTypingAnswer, meta?: { timeOut?: boolean }) => void;
   isLastQuestion?: boolean;
   isAnswered: boolean;
+  onNext?: () => void;
+  allowEnterAdvanceOnAnswered?: boolean;
 }
 
 /**

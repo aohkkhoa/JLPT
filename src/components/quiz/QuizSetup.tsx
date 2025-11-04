@@ -40,7 +40,8 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
     checkKanji: false,
   });
 
-  const [vocabFormat, setVocabFormat] = useState<'VI_TO_JP_TYPING' | 'JP_TO_VI_MCQ'>('VI_TO_JP_TYPING');
+  // Thêm định dạng mới cho MCQ: VI -> JP
+  const [vocabFormat, setVocabFormat] = useState<'VI_TO_JP_TYPING' | 'JP_TO_VI_MCQ' | 'VI_TO_JP_MCQ'>('VI_TO_JP_TYPING');
 
   // --- Handlers ---
   const toggleKanaSet = (key: KanaSet) => {
@@ -81,18 +82,25 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
         alert("Vui lòng chọn ít nhất một bài học");
         return;
       }
-      if (!typingChecks.checkRomaji && !typingChecks.checkHiragana && !typingChecks.checkKanji) {
-        alert("Vui lòng chọn ít nhất một kiểu kiểm tra (Romaji / Hiragana / Kanji)");
-        return;
+
+      // Nếu là dạng typing (VI -> JP typing), thì yêu cầu ít nhất 1 typing check.
+      if (vocabFormat === 'VI_TO_JP_TYPING') {
+        if (!typingChecks.checkRomaji && !typingChecks.checkHiragana && !typingChecks.checkKanji) {
+          alert("Vui lòng chọn ít nhất một kiểu kiểm tra (Romaji / Hiragana / Kanji)");
+          return;
+        }
       }
+
       const settings: QuizSettings = {
         quizType: "VOCABULARY",
         numQuestions: Math.max(1, Math.floor(numQuestions)),
         selectedLessons,
         quizFormat: vocabFormat,
+        // Chỉ include typingSettings khi định dạng là VI_TO_JP_TYPING
         ...(vocabFormat === 'VI_TO_JP_TYPING' ? { typingSettings: typingChecks } : {}),
         difficulty,
-      };
+      } as QuizSettings;
+
       onStart(settings);
     }
   };
@@ -191,6 +199,12 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
               >
                 Trắc nghiệm (JP → VI)
               </button>
+              <button
+                onClick={() => setVocabFormat('VI_TO_JP_MCQ')}
+                className={`flex-1 p-2 rounded-lg ${vocabFormat === 'VI_TO_JP_MCQ' ? 'bg-sky-500 text-white' : 'bg-gray-100'}`}
+              >
+                Trắc nghiệm (VI → JP)
+              </button>
             </div>
           </div>
           <div className="mb-6">
@@ -208,46 +222,49 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
             </div>
           </div>
 
-          <div className="mb-6">
-            <div className="space-y-3 mt-4 p-4 border rounded-lg">
-              <div className="flex items-center">
-                <input
-                  id="checkHiragana"
-                  name="checkHiragana"
-                  type="checkbox"
-                  checked={typingChecks.checkHiragana}
-                  onChange={handleTypingCheckChange}
-                  className="h-5 w-5 rounded border-gray-300 text-sky-500 focus:ring-sky-400"
-                />
-                <label htmlFor="checkHiragana" className="ml-3 text-md font-medium text-gray-700">Kiểm tra Hiragana / Katakana</label>
-              </div>
+          {/* Chỉ hiển thị typingChecks khi đang ở chế độ Gõ (VI -> JP) */}
+          {vocabFormat === 'VI_TO_JP_TYPING' && (
+            <div className="mb-6">
+              <div className="space-y-3 mt-4 p-4 border rounded-lg">
+                <div className="flex items-center">
+                  <input
+                    id="checkHiragana"
+                    name="checkHiragana"
+                    type="checkbox"
+                    checked={typingChecks.checkHiragana}
+                    onChange={handleTypingCheckChange}
+                    className="h-5 w-5 rounded border-gray-300 text-sky-500 focus:ring-sky-400"
+                  />
+                  <label htmlFor="checkHiragana" className="ml-3 text-md font-medium text-gray-700">Kiểm tra Hiragana / Katakana</label>
+                </div>
 
-              <div className="flex items-center">
-                <input
-                  id="checkRomaji"
-                  name="checkRomaji"
-                  type="checkbox"
-                  checked={typingChecks.checkRomaji}
-                  onChange={handleTypingCheckChange}
-                  className="h-5 w-5 rounded border-gray-300 text-sky-500 focus:ring-sky-400"
-                />
-                <label htmlFor="checkRomaji" className="ml-3 text-md font-medium text-gray-700">Kiểm tra Romaji</label>
-              </div>
+                <div className="flex items-center">
+                  <input
+                    id="checkRomaji"
+                    name="checkRomaji"
+                    type="checkbox"
+                    checked={typingChecks.checkRomaji}
+                    onChange={handleTypingCheckChange}
+                    className="h-5 w-5 rounded border-gray-300 text-sky-500 focus:ring-sky-400"
+                  />
+                  <label htmlFor="checkRomaji" className="ml-3 text-md font-medium text-gray-700">Kiểm tra Romaji</label>
+                </div>
 
-              <div className="flex items-center opacity-50">
-                <input
-                  id="checkKanji"
-                  name="checkKanji"
-                  type="checkbox"
-                  checked={typingChecks.checkKanji}
-                  onChange={handleTypingCheckChange}
-                  className="h-5 w-5 rounded border-gray-300"
-                  disabled
-                />
-                <label htmlFor="checkKanji" className="ml-3 text-md font-medium text-gray-700">Kiểm tra Kanji (sắp có)</label>
+                <div className="flex items-center opacity-50">
+                  <input
+                    id="checkKanji"
+                    name="checkKanji"
+                    type="checkbox"
+                    checked={typingChecks.checkKanji}
+                    onChange={handleTypingCheckChange}
+                    className="h-5 w-5 rounded border-gray-300"
+                    disabled
+                  />
+                  <label htmlFor="checkKanji" className="ml-3 text-md font-medium text-gray-700">Kiểm tra Kanji (sắp có)</label>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </>
       )}
 

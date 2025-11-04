@@ -19,14 +19,17 @@ export default function QuizPage() {
     currentQuestionIndex,
     timeLeft,
     currentQuestionResult,
+    quizSettings,
     startQuiz,
     handleAnswer,
+    handleNext,
     handleMcqAnswer,
     resetToSetup,
   } = useQuizEngine();
 
   // isCurrentQuestionAnswered giờ có thể được tính toán đơn giản hơn
   const isCurrentQuestionAnswered = !!currentQuestionResult;
+  const allowEnterAdvance = quizSettings?.difficulty === "easy";
   const [lastQuizSettings, setLastQuizSettings] = useState<QuizSettings | null>(null);
 
   const handleStart = (settings: QuizSettings) => {
@@ -73,6 +76,8 @@ export default function QuizPage() {
           isLastQuestion={currentQuestionIndex === questions.length - 1}
           isAnswered={isCurrentQuestionAnswered} // <-- TRUYỀN PROP MỚI
           result={currentQuestionResult} // <-- TRUYỀN PROP MỚI
+          onNext={handleNext}
+          allowEnterAdvanceOnAnswered={allowEnterAdvance}
         />
       );
     }
@@ -91,6 +96,8 @@ export default function QuizPage() {
           totalQuestions={questions.length}
           isAnswered={isCurrentQuestionAnswered} // <-- TRUYỀN PROP MỚI
           result={currentQuestionResult} // <-- TRUYỀN PROP MỚI
+          onNext={handleNext}
+          allowEnterAdvanceOnAnswered={allowEnterAdvance}
         />
       );
     }
@@ -110,6 +117,8 @@ export default function QuizPage() {
             timedOut: !!currentQuestionResult.timedOut,
           }
             : null}
+          onNext={handleNext}
+          allowEnterAdvanceOnAnswered={allowEnterAdvance}
         />
       );
     }

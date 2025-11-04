@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { Question, QuizHistoryItem } from "../../types/quiz";
-
+import React from "react";
 interface KanaTypingQuestionProps {
   questionData: Question;
   questionNumber: number;
@@ -12,6 +12,8 @@ interface KanaTypingQuestionProps {
   timeLeft: number | null;
   isAnswered: boolean; // parent báo đã trả lời cho câu này chưa
   result: QuizHistoryItem | null; // lịch sử cho câu hiện tại (nếu có)
+  onNext?: () => void;
+  allowEnterAdvanceOnAnswered?: boolean;
 }
 
 /**
@@ -29,6 +31,8 @@ export default function KanaTypingQuestion({
   timeLeft,
   isAnswered,
   result,
+  onNext,
+  allowEnterAdvanceOnAnswered
 }: KanaTypingQuestionProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -110,16 +114,26 @@ export default function KanaTypingQuestion({
         {timeLeft !== null && (
           <div className="text-center mb-4">
             <p
-              className={`font-bold text-2xl transition-colors ${
-                timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-gray-700"
-              }`}
+              className={`font-bold text-2xl transition-colors ${timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-gray-700"
+                }`}
             >
               {timeLeft}
             </p>
           </div>
         )}
 
-        <form onSubmit={(e) => handleSubmit(e)}>
+        <form onSubmit={(e) => {
+          if (isAnswered) {
+            if (allowEnterAdvanceOnAnswered && typeof onNext === "function") {
+              e.preventDefault();
+              onNext();
+              return;
+            }
+            e.preventDefault();
+            return;
+          }
+          handleSubmit(e);
+        }}>
           <input
             ref={inputRef}
             type="text"
@@ -128,15 +142,14 @@ export default function KanaTypingQuestion({
             placeholder="Nhập phiên âm romaji"
             aria-label="Nhập romaji"
             readOnly={isAnswered || pendingSubmit}
-            className={`w-full p-3 border-2 rounded-lg text-center text-xl transition-all duration-300 ${
-              isAnswered
-                ? isCorrect === null
-                  ? "border-gray-300 bg-gray-50"
-                  : isCorrect
+            className={`w-full p-3 border-2 rounded-lg text-center text-xl transition-all duration-300 ${isAnswered
+              ? isCorrect === null
+                ? "border-gray-300 bg-gray-50"
+                : isCorrect
                   ? "border-green-400 bg-green-50"
                   : "border-red-400 bg-red-50"
-                : "border-gray-300 focus:border-sky-400 focus:ring-sky-400"
-            }`}
+              : "border-gray-300 focus:border-sky-400 focus:ring-sky-400"
+              }`}
           />
         </form>
       </div>
@@ -145,19 +158,18 @@ export default function KanaTypingQuestion({
         {isAnswered ? (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div
-              className={`p-3 rounded-lg text-center font-semibold mb-2 ${
-                isCorrect === null
-                  ? "bg-gray-100 text-gray-800"
-                  : isCorrect
+              className={`p-3 rounded-lg text-center font-semibold mb-2 ${isCorrect === null
+                ? "bg-gray-100 text-gray-800"
+                : isCorrect
                   ? "bg-green-100 text-green-800"
                   : "bg-red-100 text-red-800"
-              }`}
+                }`}
             >
               {isCorrect === null
                 ? "Đã gửi — chờ kết quả..."
                 : isCorrect
-                ? "Chính xác!"
-                : `Sai rồi! Đáp án đúng là: ${questionData.correctAnswers.romaji}`}
+                  ? "Chính xác!"
+                  : `Sai rồi! Đáp án đúng là: ${questionData.correctAnswers.romaji}`}
             </div>
 
             {pendingSubmit && <p className="text-center text-gray-500">Đang gửi kết quả...</p>}
@@ -170,9 +182,8 @@ export default function KanaTypingQuestion({
           <button
             onClick={() => handleSubmit()}
             disabled={pendingSubmit}
-            className={`w-full px-6 py-3 bg-sky-400 text-white rounded-full shadow hover:opacity-90 transition-all font-semibold ${
-              pendingSubmit ? "opacity-80 cursor-wait" : ""
-            }`}
+            className={`w-full px-6 py-3 bg-sky-400 text-white rounded-full shadow hover:opacity-90 transition-all font-semibold ${pendingSubmit ? "opacity-80 cursor-wait" : ""
+              }`}
           >
             {pendingSubmit ? "Đang kiểm tra..." : "Kiểm tra"}
           </button>

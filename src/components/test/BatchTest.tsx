@@ -23,6 +23,7 @@ export default function BatchTest() {
     inOrder: boolean;
     startRange?: number;
     endRange?: number;
+    filterByStrokes?: boolean;
   }) => {
     setQuestions(qs);
     setInput("");

@@ -221,3 +221,63 @@ export function generateJpToViMcqQuestions(selectedLessons: number[] = [], num: 
     } as Question;
   });
 }
+
+/**
+ * Sinh câu hỏi MCQ: VI -> JP
+ * - selectedLessons: mảng số lesson (ví dụ [1,2])
+ * - numQuestions: tổng số câu muốn sinh
+ *
+ * Assumption: each vocabulary item has { jp, romaji, vi }
+ */
+export function generateViToJpMcqQuestions(selectedLessons: number[], numQuestions: number): Question[] {
+  const pool: Array<{ jp: string; romaji?: string; vi: string }> = [];
+
+  for (const n of selectedLessons) {
+    const lesson = (ALL_LESSONS_DATA as any)[n];
+    if (!lesson || !Array.isArray(lesson.vocabulary)) continue;
+    for (const item of lesson.vocabulary) {
+      if (!item) continue;
+      const jp = String(item.jp ?? item.hira ?? item.romaji ?? "").trim();
+      const vi = String(item.vi ?? "").trim();
+      if (!jp || !vi) continue;
+      pool.push({ jp, romaji: item.romaji, vi });
+    }
+  }
+
+  if (pool.length === 0) return [];
+
+  // helper shuffle
+  const shuffle = <T,>(arr: T[]) => arr.sort(() => Math.random() - 0.5);
+
+  const shuffled = shuffle([...pool]);
+  const questions: Question[] = [];
+
+  // choose up to numQuestions items as correct items
+  const take = Math.min(numQuestions, shuffled.length);
+  for (let i = 0; i < take; i++) {
+    const correct = shuffled[i];
+
+    // pick distractors from the rest
+    const others = shuffle(shuffled.filter((_, idx) => idx !== i)).slice(0, 3); // 3 distractors => 4 options
+    const opts = shuffle([correct.jp, ...others.map(o => o.jp)]);
+
+    // Build Question object — adapt field names to your Question type
+    const q: Question = {
+      questionText: correct.vi, // Vietnamese shown as prompt
+      options: opts,
+      // store canonical JP correct string so grader can compare directly
+      correctAnswers: {
+        // if your type expects romaji/hiragana fields, use one of them consistently;
+        // here we set romaji field to hold JP display for simplicity (or use a dedicated 'jp' field if exists)
+        romaji: correct.jp, // using romaji slot to store JP display string (or adapt)
+        hiragana: correct.jp, // duplicate to be safe
+        kanji: "",
+      },
+      // include options etc. (adjust rest fields per your Question type)
+    } as unknown as Question;
+
+    questions.push(q);
+  }
+
+  return questions;
+}

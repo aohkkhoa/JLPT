@@ -72,34 +72,46 @@ export function generateBatchQuestions(params: {
   inOrder?: boolean;
   startRange?: number;
   endRange?: number;
+  filterByStrokes?: boolean;
 }): QAItem[] {
 
-  const { testType, count: rawCount, inOrder = false, startRange = 1, endRange = 10 } = params;
+  const { testType, count: rawCount, inOrder = false, startRange = 1, endRange = 10, filterByStrokes = false} = params;
   const pool = buildCharacterSet(testType);
 
   if (!pool || pool.length === 0) return [];
 
   const count = Math.max(1, Math.floor(rawCount || 1));
-  const safeCount = Math.min(count, pool.length);
+  let selectedItems: QAItem[] = [];
 
-  // Trường hợp radical + inOrder: lấy subrange trước, rồi shuffle subrange
-  if (testType === "radical" && inOrder) {
-    // Convert 1-based user input sang 0-based slice
-    const startIndex = Math.max(0, (startRange || 1) - 1);
-    // endRange là inclusive => slice endIndex = endRange (as index+1)
-    const endIndexExclusive = Math.min(pool.length, (endRange ?? pool.length));
-    if (startIndex >= endIndexExclusive) {
-      // Invalid range -> trả về rỗng để component xử lý (alert)
-      return [];
+  if (testType === "radical") {
+    if (filterByStrokes) {
+      // Filter by stroke count
+      const minStrokes = startRange || 1;
+      const maxStrokes = endRange || 17; // Max strokes in allRadicals is 17
+      selectedItems = (allRadicals as any[]) // Cast to any[] to access 'strokes'
+        .filter(r => r.strokes >= minStrokes && r.strokes <= maxStrokes)
+        .map(r => [r.char, `${r.hanViet}: ${r.meaning}`] as QAItem);
+    } else {
+      // Filter by index (original interpretation of startRange/endRange for radicals)
+      const startIndex = Math.max(0, (startRange || 1) - 1);
+      const endIndexExclusive = Math.min(pool.length, (endRange ?? pool.length));
+      if (startIndex >= endIndexExclusive) {
+        return []; // Invalid range
+      }
+      selectedItems = pool.slice(startIndex, endIndexExclusive);
     }
-    const sub = pool.slice(startIndex, endIndexExclusive);
-    const shuffledSub = shuffle(sub);
-    return shuffledSub.slice(0, Math.min(safeCount, shuffledSub.length));
+
+    // Apply shuffling if not inOrder
+    if (!inOrder) {
+      selectedItems = shuffle(selectedItems);
+    }
+  } else {
+    // For other test types, always shuffle the full pool and then slice
+    selectedItems = shuffle(pool);
   }
 
-  // Bình thường: shuffle toàn pool rồi slice số lượng an toàn
-  const shuffled = shuffle(pool);
-  return shuffled.slice(0, safeCount);
+  // Slice to the requested count
+  return selectedItems.slice(0, Math.min(count, selectedItems.length));
 }
 
 /**

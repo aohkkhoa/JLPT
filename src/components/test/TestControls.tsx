@@ -17,6 +17,7 @@ interface ControlsProps {
     inOrder: boolean;
     startRange?: number;
     endRange?: number;
+    filterByStrokes?: boolean;
   }) => void;
 }
 
@@ -30,11 +31,12 @@ export default function TestControls({
   initialCount = 5,
   initialInOrder = false,
   initialStart = 1,
-  initialEnd = 10,
+  initialEnd = 10, // Mặc định cho khoảng dựa trên chỉ mục
   onStart,
 }: ControlsProps) {
   const [testType, setTestType] = React.useState<TestType>(initialType);
   const [count, setCount] = React.useState<number>(initialCount);
+  const [filterByStrokes, setFilterByStrokes] = React.useState<boolean>(false); // State mới, mặc định là false
   const [inOrder, setInOrder] = React.useState<boolean>(initialInOrder);
   const [startRange, setStartRange] = React.useState<number>(initialStart);
   const [endRange, setEndRange] = React.useState<number>(initialEnd);
@@ -48,7 +50,7 @@ export default function TestControls({
 
   const handleStart = () => {
     // Kiểm tra cơ bản
-    if (testType === "radical" && inOrder) {
+    if (testType === "radical" && (inOrder || filterByStrokes)) {
       if (startRange < 1 || endRange < 1 || startRange > endRange) {
         alert("Khoảng không hợp lệ: start <= end và >= 1");
         return;
@@ -61,6 +63,7 @@ export default function TestControls({
       inOrder,
       startRange,
       endRange,
+      filterByStrokes, // Truyền tham số mới
     });
 
     if (!qs || qs.length === 0) {
@@ -68,7 +71,7 @@ export default function TestControls({
       return;
     }
 
-    onStart(qs, { testType, count, inOrder, startRange, endRange });
+    onStart(qs, { testType, count, inOrder, startRange, endRange, filterByStrokes }); // Truyền filterByStrokes trong meta
   };
 
   return (
@@ -96,23 +99,37 @@ export default function TestControls({
             className="w-24 text-center p-2 rounded-lg border border-gray-300"
           />
         </div>
-
+      </div>
+      <div className="flex item-center">
+        {/* Checkbox để lọc theo số nét */}
         {testType === "radical" && (
-          <div className="flex items-center gap-2">
-            <input id="inOrder" type="checkbox" checked={inOrder} onChange={(e) => setInOrder(e.target.checked)} className="h-4 w-4" />
-            <label htmlFor="inOrder" className="text-sm text-gray-600">Chọn khoảng</label>
-          </div>
+          <>
+            <div className="flex items-center gap-2 mr-4">
+              <input id="filterByStrokes" type="checkbox" checked={filterByStrokes} onChange={(e) => setFilterByStrokes(e.target.checked)} className="h-4 w-4" />
+              <label htmlFor="filterByStrokes" className="text-sm text-gray-600">Lọc theo số nét</label>
+            </div>
+            {/* Đổi tên label của checkbox "Chọn khoảng" thành "Giữ nguyên thứ tự" cho rõ nghĩa hơn */}
+            <div className="flex items-center gap-2">
+              <input id="inOrder" type="checkbox" checked={inOrder} onChange={(e) => setInOrder(e.target.checked)} className="h-4 w-4" />
+              <label htmlFor="inOrder" className="text-sm text-gray-600">Giữ nguyên thứ tự</label>
+            </div>
+          </>
         )}
       </div>
 
-      {testType === "radical" && inOrder && (
+      {/* Input cho khoảng, hiển thị khi testType là radical VÀ (inOrder là true HOẶC filterByStrokes là true) */}
+      {testType === "radical" && (inOrder || filterByStrokes) && (
         <div className="flex gap-4">
           <div className="flex flex-col items-center">
-            <label className="text-sm text-gray-600 mb-1">Từ bộ số</label>
+            <label className="text-sm text-gray-600 mb-1">
+              {filterByStrokes ? "Từ số nét" : "Từ bộ số"}
+            </label>
             <input type="number" min={1} value={startRange} onChange={(e) => setStartRange(Math.max(1, Number(e.target.value || 1)))} className="w-24 text-center p-2 rounded-lg border border-gray-300" />
           </div>
           <div className="flex flex-col items-center">
-            <label className="text-sm text-gray-600 mb-1">Đến bộ số</label>
+            <label className="text-sm text-gray-600 mb-1">
+              {filterByStrokes ? "Đến số nét" : "Đến bộ số"}
+            </label>
             <input type="number" min={1} value={endRange} onChange={(e) => setEndRange(Math.max(1, Number(e.target.value || 1)))} className="w-24 text-center p-2 rounded-lg border border-gray-300" />
           </div>
         </div>

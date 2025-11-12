@@ -229,55 +229,49 @@ export function generateJpToViMcqQuestions(selectedLessons: number[] = [], num: 
  *
  * Assumption: each vocabulary item has { jp, romaji, vi }
  */
-export function generateViToJpMcqQuestions(selectedLessons: number[], numQuestions: number): Question[] {
-  const pool: Array<{ jp: string; romaji?: string; vi: string }> = [];
+export function generateViToJpMcqQuestions(selectedLessons: number[] = [], numQuestions: number): Question[] {
+  const pool: { jp: string; romaji?: string; hira: string; vi: string; kanji?: string }[] = [];
 
-  for (const n of selectedLessons) {
+  const lessonsToUse = (selectedLessons && selectedLessons.length > 0)
+    ? selectedLessons
+    : Object.keys(ALL_LESSONS_DATA).map(Number);
+
+  for (const n of lessonsToUse) {
     const lesson = (ALL_LESSONS_DATA as any)[n];
-    if (!lesson || !Array.isArray(lesson.vocabulary)) continue;
+    if (!lesson || !lesson.vocabulary || !Array.isArray(lesson.vocabulary)) continue;
+
     for (const item of lesson.vocabulary) {
       if (!item) continue;
+      if (!item.vi) continue; // need Vietnamese prompt
       const jp = String(item.jp ?? item.hira ?? item.romaji ?? "").trim();
       const vi = String(item.vi ?? "").trim();
       if (!jp || !vi) continue;
-      pool.push({ jp, romaji: item.romaji, vi });
+      pool.push({ jp, romaji: item.romaji ? String(item.romaji).toLowerCase().trim() : "", hira: item.hira ? String(item.hira).trim() : jp, kanji: item.kanji ? String(item.kanji).trim() : undefined, vi });
     }
   }
 
   if (pool.length === 0) return [];
 
-  // helper shuffle
-  const shuffle = <T,>(arr: T[]) => arr.sort(() => Math.random() - 0.5);
+  const shuffled = shuffle(pool);
+  const slice = shuffled.slice(0, Math.min(numQuestions, shuffled.length));
 
-  const shuffled = shuffle([...pool]);
-  const questions: Question[] = [];
+  // For distractors, use the whole pool's jp values
+  const allJp = pool.map(p => p.jp);
 
-  // choose up to numQuestions items as correct items
-  const take = Math.min(numQuestions, shuffled.length);
-  for (let i = 0; i < take; i++) {
-    const correct = shuffled[i];
+  return slice.map((entry) => {
+    const distractors = shuffle(allJp.filter(j => j !== entry.jp)).slice(0, 3);
+    const options = shuffle([entry.jp, ...distractors]);
 
-    // pick distractors from the rest
-    const others = shuffle(shuffled.filter((_, idx) => idx !== i)).slice(0, 3); // 3 distractors => 4 options
-    const opts = shuffle([correct.jp, ...others.map(o => o.jp)]);
-
-    // Build Question object — adapt field names to your Question type
-    const q: Question = {
-      questionText: correct.vi, // Vietnamese shown as prompt
-      options: opts,
-      // store canonical JP correct string so grader can compare directly
+    return {
+      questionText: entry.vi, // show Vietnamese prompt
+      options,
       correctAnswers: {
-        // if your type expects romaji/hiragana fields, use one of them consistently;
-        // here we set romaji field to hold JP display for simplicity (or use a dedicated 'jp' field if exists)
-        romaji: correct.jp, // using romaji slot to store JP display string (or adapt)
-        hiragana: correct.jp, // duplicate to be safe
-        kanji: "",
+        // store canonical JP string(s) inside correctAnswers fields so grader can use them
+        romaji: entry.jp, // using romaji slot to hold JP display (consistent with earlier hack)
+        hiragana: entry.hira,
+        kanji: entry.kanji,
       },
-      // include options etc. (adjust rest fields per your Question type)
-    } as unknown as Question;
-
-    questions.push(q);
-  }
-
-  return questions;
+      type: "MCQ",
+    } as Question;
+  });
 }

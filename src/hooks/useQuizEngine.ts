@@ -9,7 +9,7 @@ import type {
     QuizSettings,
     UserTypingAnswer,
 } from "../types/quiz";
-import { generateKanaQuestions, generateViToJpTypingQuestions, generateJpToViMcqQuestions } from "../utils/quizHelpers";
+import { generateKanaQuestions, generateViToJpTypingQuestions, generateJpToViMcqQuestions, generateViToJpMcqQuestions } from "../utils/quizHelpers";
 import { ALL_LESSONS_DATA } from "../data/minnaData";
 
 /**
@@ -66,6 +66,8 @@ export const useQuizEngine = () => {
             const s = settings as VocabQuizSettings;
             if (s.quizFormat === "JP_TO_VI_MCQ") {
                 generatedQuestions = generateJpToViMcqQuestions(s.selectedLessons, s.numQuestions);
+            } else if ((s as any).quizFormat === 'VI_TO_JP_MCQ') {
+                generatedQuestions = generateViToJpMcqQuestions(s.selectedLessons, s.numQuestions);
             } else {
                 generatedQuestions = generateViToJpTypingQuestions(s.selectedLessons, s.numQuestions);
             }
@@ -201,6 +203,60 @@ export const useQuizEngine = () => {
         answeredSetRef.current.add(idx);
         setHistory(prev => [...prev, newHistoryItem]);
         console.log(`[useQuizEngine] answered idx=${idx}, isFullyCorrect=${isFullyCorrect}, history now=${history.length + 1}`);
+    }, [questions, currentQuestionIndex, quizSettings]);
+
+    // -------------------------
+    // Hàm xử lý dành cho MCQ (VI -> JP)
+    // rawAnswer: chuỗi là đáp án JP được chọn
+    // So sánh trực tiếp với q.correctAnswers.romaji (we store JP there for MCQ generator)
+    const handleViToJpMcqAnswer = useCallback((rawAnswer: string, settingsArg?: QuizSettings, meta?: { timedOut?: boolean }) => {
+        const settings = settingsArg ?? quizSettings;
+        if (!settings) {
+            console.warn("handleViToJpMcqAnswer: thiếu quizSettings");
+            return;
+        }
+
+        const idx = currentQuestionIndex;
+        if (answeredSetRef.current.has(idx)) {
+            console.warn("Double submission blocked for index", idx);
+            return;
+        }
+
+        const q = questions[idx];
+        if (!q) {
+            console.warn("Không có câu hỏi hiện tại để chấm (VI->JP MCQ).");
+            return;
+        }
+
+        const selected = String(rawAnswer ?? "").trim();
+
+        // We stored the canonical JP string in correctAnswers.romaji by generator
+        const correctJp = (q.correctAnswers && (q.correctAnswers.romaji ?? q.correctAnswers.hiragana ?? q.correctAnswers.kanji)) ?? "";
+        const isCorrect = correctJp ? selected === correctJp : false;
+
+        const newHistoryItem: QuizHistoryItem = {
+            question: q.questionText,
+            correctAnswer: {
+                romaji: correctJp,
+                hiragana: q.correctAnswers.hiragana,
+                kanji: q.correctAnswers.kanji,
+            },
+            userAnswer: {
+                romaji: selected,
+                hiragana: "",
+                kanji: "",
+            },
+            isCorrect,
+            results: { romaji: null, hiragana: null, kanji: null },
+            options: q.options,
+            timedOut: !!(meta && meta.timedOut),
+        };
+
+        if (isCorrect) setScore(prev => prev + 1);
+
+        answeredSetRef.current.add(idx);
+        setHistory(prev => [...prev, newHistoryItem]);
+        console.log(`[useQuizEngine][MCQ VI->JP] answered idx=${idx}, selected=${selected}, isCorrect=${isCorrect}, history now=${history.length + 1}`);
     }, [questions, currentQuestionIndex, quizSettings]);
 
     // -------------------------
@@ -405,12 +461,20 @@ export const useQuizEngine = () => {
 
         try {
             // Nếu là MCQ (JP -> VI) thì gọi handleMcqAnswer
-            if (quizSettings && quizSettings.quizType === "VOCABULARY" && (quizSettings as VocabQuizSettings).quizFormat === "JP_TO_VI_MCQ") {
-                handleMcqAnswer("", undefined, { timedOut: true });
+            if (quizSettings && quizSettings.quizType === "VOCABULARY") {
+                const fmt = (quizSettings as VocabQuizSettings).quizFormat;
+                if (fmt === "JP_TO_VI_MCQ") {
+                    handleMcqAnswer("", undefined, { timedOut: true });
+                } else if (fmt === "VI_TO_JP_MCQ") {
+                    handleViToJpMcqAnswer("", undefined, { timedOut: true });
+                } else {
+                    handleAnswer({ romaji: "TIME_OUT", hiragana: "TIME_OUT", kanji: "" }, undefined, { timedOut: true });
+                }
             } else {
                 // Với typing quiz (KANA hoặc VI->JP), nộp payload TIME_OUT để chấm (theo logic hiện tại của bạn)
                 handleAnswer({ romaji: "TIME_OUT", hiragana: "TIME_OUT", kanji: "" }, undefined, { timedOut: true });
             }
+            
         } catch (e) {
             console.warn("Error auto-submitting on timeout:", e);
         }
@@ -454,7 +518,8 @@ export const useQuizEngine = () => {
         // hàm điều khiển
         startQuiz,
         handleAnswer,
-        handleMcqAnswer,
+    handleMcqAnswer,
+    handleViToJpMcqAnswer,
         handleNext,
         resetToSetup, // alias tương thích với QuizPage
 

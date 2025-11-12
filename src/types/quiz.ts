@@ -102,7 +102,7 @@ export interface VocabQuizSettings {
   quizType: "VOCABULARY";
   numQuestions: number;
   selectedLessons: number[]; // danh sách số bài được chọn
-  quizFormat: "VI_TO_JP_TYPING" | "JP_TO_VI_MCQ" | "VI_TO_KANJI_MCQ";
+  quizFormat: "VI_TO_JP_TYPING" | "JP_TO_VI_MCQ" | "VI_TO_JP_MCQ" | "VI_TO_KANJI_MCQ"; //thêm dạng VI_TO_KANJI_MCQ
   typingSettings?: {
     checkRomaji: boolean;
     checkHiragana: boolean;

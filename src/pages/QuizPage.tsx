@@ -24,6 +24,7 @@ export default function QuizPage() {
     handleAnswer,
     handleNext,
     handleMcqAnswer,
+    handleViToJpMcqAnswer,
     resetToSetup,
   } = useQuizEngine();
 
@@ -122,6 +123,26 @@ export default function QuizPage() {
         />
       );
     }
+    
+      // VI -> JP MCQ
+      if (lastQuizSettings.quizType === 'VOCABULARY' && (lastQuizSettings as any).quizFormat === 'VI_TO_JP_MCQ') {
+        return (
+          <McqQuestion
+            timeLeft={timeLeft}
+            questionData={currentQuestion}
+            onAnswer={(selected: string, meta?: { timeOut?: boolean }) => (handleViToJpMcqAnswer as any)(selected, lastQuizSettings, meta?.timeOut ? { timedOut: true } : undefined)}
+            isAnswered={isCurrentQuestionAnswered}
+            currentResult={currentQuestionResult ? {
+              // correctAnswer here should be the canonical JP string stored in correctAnswer.romaji
+              correctAnswer: currentQuestionResult.correctAnswer?.romaji ?? "",
+              userAnswer: currentQuestionResult.userAnswer?.romaji ?? "",
+              timedOut: !!currentQuestionResult.timedOut,
+            } : null}
+            onNext={handleNext}
+            allowEnterAdvanceOnAnswered={allowEnterAdvance}
+          />
+        );
+      }
   }
 
   return <div>Đang tải bài kiểm tra...</div>;

@@ -49,8 +49,12 @@ export default function RadicalsPage() {
           {Object.entries(groupedRadicals).map(([strokes, radicals]) => (
             <div key={strokes}>
               <h2 className="text-2xl font-bold text-indigo-500 mb-4 pb-2 border-b-2 border-indigo-200">
-                {strokes} nét
+                {strokes} nét{" "}
+                <span className="text-lg text-gray-400 font-medium mb-[2px]">
+                  ({radicals.length} chữ)
+                </span>
               </h2>
+
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
                 {radicals.map((radical) => (
                   <motion.div

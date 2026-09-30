@@ -6,6 +6,8 @@
  * Tên các bộ kana có thể chọn
  */
 export type KanaSet = "base" | "dakuten" | "yoon";
+export type KanaQuizFormat = "KANA_TO_ROMAJI" | "AUDIO_TO_KANA";
+export type KanaScript = "hiragana" | "katakana";
 
 /**
  * Cấu trúc câu hỏi chung
@@ -92,6 +94,8 @@ export interface KanaQuizSettings {
   quizType: "KANA";
   numQuestions: number;
   selectedSets: Record<KanaSet, boolean>;
+  quizFormat?: KanaQuizFormat;
+  kanaScript?: KanaScript;
   difficulty: "easy" | "hard";
 }
 

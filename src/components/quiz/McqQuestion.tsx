@@ -14,6 +14,10 @@ interface McqQuestionProps {
   } | null;
   onNext?: () => void;
   allowEnterAdvanceOnAnswered?: boolean;
+  isLastQuestion?: boolean;
+  promptLabel?: string;
+  promptText?: string;
+  onReplayAudio?: () => void;
 }
 
 export default function McqQuestion({
@@ -24,6 +28,10 @@ export default function McqQuestion({
   currentResult = null,
   onNext,
   allowEnterAdvanceOnAnswered = false,
+  isLastQuestion = false,
+  promptLabel = "Chọn nghĩa tiếng Việt đúng",
+  promptText,
+  onReplayAudio,
 }: McqQuestionProps) {
   const options = Array.isArray(questionData?.options) ? questionData.options : [];
   const [localSelectedIdx, setLocalSelectedIdx] = useState<number | null>(null);
@@ -97,11 +105,21 @@ export default function McqQuestion({
   return (
     <div className="w-full max-w-lg mx-auto">
       <div className="bg-white p-8 rounded-2xl shadow-inner text-center">
-        <p className="text-gray-600 mb-2 font-semibold">Chọn nghĩa tiếng Việt đúng</p>
+        <p className="text-gray-600 mb-2 font-semibold">{promptLabel}</p>
 
         <div className="text-3xl md:text-4xl font-bold text-indigo-700 mb-6 min-h-[4rem] flex items-center justify-center break-words">
-          {questionData?.questionText ?? "— Không có câu hỏi —"}
+          {promptText ?? questionData?.questionText ?? "— Không có câu hỏi —"}
         </div>
+
+        {onReplayAudio && (
+          <button
+            type="button"
+            onClick={onReplayAudio}
+            className="mb-5 rounded-lg bg-sky-100 px-5 py-3 font-semibold text-sky-800 hover:bg-sky-200"
+          >
+            Phát lại âm
+          </button>
+        )}
 
         {timeLeft !== null && (
           <div className="text-center mb-4">
@@ -116,7 +134,7 @@ export default function McqQuestion({
             <button
               key={idx}
               onClick={() => handleSelect(idx)}
-              disabled={localDisabled}
+              disabled={localDisabled || isAnswered}
               aria-pressed={localSelectedIdx === idx}
               className={getOptionClasses(opt, idx)}
             >
@@ -126,6 +144,16 @@ export default function McqQuestion({
           ))}
         </div>
       </div>
+
+      {isAnswered && allowEnterAdvanceOnAnswered && onNext && (
+        <button
+          type="button"
+          onClick={onNext}
+          className="mt-4 w-full rounded-lg bg-sky-600 px-5 py-3 font-semibold text-white hover:bg-sky-700"
+        >
+          {isLastQuestion ? "Xem kết quả" : "Câu tiếp theo"}
+        </button>
+      )}
     </div>
   );
 }

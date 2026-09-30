@@ -1,6 +1,6 @@
 // src/components/quiz/QuizSetup.tsx
 import { useState } from "react";
-import type { QuizSettings, KanaSet } from "../../types/quiz";
+import type { QuizSettings, KanaSet, KanaQuizFormat, KanaScript } from "../../types/quiz";
 import { ALL_LESSONS_DATA } from "../../data/minnaData";
 
 interface QuizSetupProps {
@@ -28,6 +28,8 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
     dakuten: true,
     yoon: true,
   });
+  const [kanaQuizFormat, setKanaQuizFormat] = useState<KanaQuizFormat>("KANA_TO_ROMAJI");
+  const [kanaScript, setKanaScript] = useState<KanaScript>("hiragana");
 
   // --- State cho VOCABULARY ---
   const [selectedLessons, setSelectedLessons] = useState<number[]>([1]);
@@ -73,6 +75,8 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
         quizType: "KANA",
         numQuestions: Math.max(1, Math.floor(numQuestions)),
         selectedSets: selectedKanaSets,
+        quizFormat: kanaQuizFormat,
+        kanaScript,
         difficulty,
       };
       onStart(settings);
@@ -160,6 +164,39 @@ export default function QuizSetup({ onStart }: QuizSetupProps) {
       {/* Cài đặt động theo loại quiz */}
       {quizType === "KANA" ? (
         <div className="mb-8">
+          <label className="block text-lg font-semibold text-gray-700 mb-3">Dạng bài</label>
+          <div className="grid grid-cols-2 gap-2 mb-6">
+            <button
+              onClick={() => setKanaQuizFormat("KANA_TO_ROMAJI")}
+              className={`p-3 rounded-lg font-semibold transition ${kanaQuizFormat === "KANA_TO_ROMAJI" ? "bg-sky-500 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-sky-100"}`}
+            >
+              Kana → Romaji
+            </button>
+            <button
+              onClick={() => setKanaQuizFormat("AUDIO_TO_KANA")}
+              className={`p-3 rounded-lg font-semibold transition ${kanaQuizFormat === "AUDIO_TO_KANA" ? "bg-sky-500 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-sky-100"}`}
+            >
+              Nghe → Chọn kana
+            </button>
+          </div>
+
+          {kanaQuizFormat === "AUDIO_TO_KANA" && (
+            <>
+              <label className="block text-lg font-semibold text-gray-700 mb-3">Chọn bảng chữ</label>
+              <div className="grid grid-cols-2 gap-2 mb-6">
+                {(["hiragana", "katakana"] as KanaScript[]).map((script) => (
+                  <button
+                    key={script}
+                    onClick={() => setKanaScript(script)}
+                    className={`p-3 rounded-lg font-semibold transition ${kanaScript === script ? "bg-pink-500 text-white shadow" : "bg-gray-100 text-gray-700 hover:bg-pink-100"}`}
+                  >
+                    {script === "hiragana" ? "Hiragana" : "Katakana"}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
           <label className="block text-lg font-semibold text-gray-700 mb-3">Chọn bộ kana</label>
           <div className="flex gap-3">
             <button

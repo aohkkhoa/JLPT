@@ -9,7 +9,7 @@ import type {
     QuizSettings,
     UserTypingAnswer,
 } from "../types/quiz";
-import { generateKanaQuestions, generateViToJpTypingQuestions, generateJpToViMcqQuestions, generateViToJpMcqQuestions } from "../utils/quizHelpers";
+import { generateKanaQuestions, generateKanaListeningQuestions, generateViToJpTypingQuestions, generateJpToViMcqQuestions, generateViToJpMcqQuestions } from "../utils/quizHelpers";
 import { ALL_LESSONS_DATA } from "../data/minnaData";
 
 /**
@@ -61,7 +61,9 @@ export const useQuizEngine = () => {
 
         if (settings.quizType === "KANA") {
             const s = settings as KanaQuizSettings;
-            generatedQuestions = generateKanaQuestions(s.selectedSets, s.numQuestions);
+            generatedQuestions = s.quizFormat === "AUDIO_TO_KANA"
+                ? generateKanaListeningQuestions(s.selectedSets, s.numQuestions, s.kanaScript ?? "hiragana")
+                : generateKanaQuestions(s.selectedSets, s.numQuestions);
         } else {
             const s = settings as VocabQuizSettings;
             if (s.quizFormat === "JP_TO_VI_MCQ") {
@@ -204,6 +206,38 @@ export const useQuizEngine = () => {
         setHistory(prev => [...prev, newHistoryItem]);
         console.log(`[useQuizEngine] answered idx=${idx}, isFullyCorrect=${isFullyCorrect}, history now=${history.length + 1}`);
     }, [questions, currentQuestionIndex, quizSettings]);
+
+    const handleKanaListeningAnswer = useCallback((rawAnswer: string, meta?: { timedOut?: boolean }) => {
+        const idx = currentQuestionIndex;
+        if (answeredSetRef.current.has(idx)) return;
+
+        const question = questions[idx];
+        if (!question) return;
+
+        const selectedKana = String(rawAnswer ?? "").trim();
+        const correctKana = question.correctAnswers.hiragana ?? "";
+        const isCorrect = selectedKana !== "" && selectedKana === correctKana;
+        const newHistoryItem: QuizHistoryItem = {
+            question: "Nghe âm và chọn kana",
+            correctAnswer: {
+                romaji: question.correctAnswers.romaji,
+                hiragana: correctKana,
+            },
+            userAnswer: {
+                romaji: "",
+                hiragana: selectedKana,
+                kanji: "",
+            },
+            isCorrect,
+            results: { romaji: null, hiragana: null, kanji: null },
+            options: question.options,
+            timedOut: !!meta?.timedOut,
+        };
+
+        if (isCorrect) setScore((previous) => previous + 1);
+        answeredSetRef.current.add(idx);
+        setHistory((previous) => [...previous, newHistoryItem]);
+    }, [questions, currentQuestionIndex]);
 
     // -------------------------
     // Hàm xử lý dành cho MCQ (VI -> JP)
@@ -471,14 +505,17 @@ export const useQuizEngine = () => {
                     handleAnswer({ romaji: "TIME_OUT", hiragana: "TIME_OUT", kanji: "" }, undefined, { timedOut: true });
                 }
             } else {
-                // Với typing quiz (KANA hoặc VI->JP), nộp payload TIME_OUT để chấm (theo logic hiện tại của bạn)
-                handleAnswer({ romaji: "TIME_OUT", hiragana: "TIME_OUT", kanji: "" }, undefined, { timedOut: true });
+                if (quizSettings?.quizType === "KANA" && quizSettings.quizFormat === "AUDIO_TO_KANA") {
+                    handleKanaListeningAnswer("", { timedOut: true });
+                } else {
+                    handleAnswer({ romaji: "TIME_OUT", hiragana: "TIME_OUT", kanji: "" }, undefined, { timedOut: true });
+                }
             }
             
         } catch (e) {
             console.warn("Error auto-submitting on timeout:", e);
         }
-    }, [timeLeft, currentQuestionIndex, quizSettings, handleMcqAnswer, handleAnswer]);
+    }, [timeLeft, currentQuestionIndex, quizSettings, handleMcqAnswer, handleViToJpMcqAnswer, handleKanaListeningAnswer, handleAnswer]);
 
     // -------------------------
     // Tính score/percent (tiện ích)
@@ -520,6 +557,7 @@ export const useQuizEngine = () => {
         handleAnswer,
     handleMcqAnswer,
     handleViToJpMcqAnswer,
+        handleKanaListeningAnswer,
         handleNext,
         resetToSetup, // alias tương thích với QuizPage
 

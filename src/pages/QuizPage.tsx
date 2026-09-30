@@ -8,6 +8,7 @@ import TypingQuestion from '../components/quiz/TypingQuestion'; // <-- IMPORT M�
 import KanaTypingQuestion from '../components/quiz/KanaTypingQuestion'; // <-- IMPORT MỚI
 import McqQuestion from '../components/quiz/McqQuestion';
 import type { QuizSettings, UserTypingAnswer } from '../types/quiz';
+import { speakJapanese } from '../utils/speech';
 
 export default function QuizPage() {
   const {
@@ -25,6 +26,7 @@ export default function QuizPage() {
     handleNext,
     handleMcqAnswer,
     handleViToJpMcqAnswer,
+    handleKanaListeningAnswer,
     resetToSetup,
   } = useQuizEngine();
 
@@ -66,6 +68,28 @@ export default function QuizPage() {
 
   // LOGIC HIỂN THỊ COMPONENT CÂU HỎI PHÙ HỢP
   if (quizState === 'playing' && currentQuestion && lastQuizSettings) {
+    if (lastQuizSettings.quizType === 'KANA' && lastQuizSettings.quizFormat === 'AUDIO_TO_KANA') {
+      return (
+        <McqQuestion
+          timeLeft={timeLeft}
+          questionData={currentQuestion}
+          promptLabel="Nghe âm và chọn kana"
+          promptText="Chọn ký tự bạn nghe được"
+          onReplayAudio={() => speakJapanese(currentQuestion.correctAnswers.hiragana ?? '')}
+          onAnswer={(selected: string, meta?: { timeOut?: boolean }) => handleKanaListeningAnswer(selected, meta?.timeOut ? { timedOut: true } : undefined)}
+          isAnswered={isCurrentQuestionAnswered}
+          currentResult={currentQuestionResult ? {
+            correctAnswer: currentQuestionResult.correctAnswer.hiragana ?? '',
+            userAnswer: currentQuestionResult.userAnswer.hiragana,
+            timedOut: !!currentQuestionResult.timedOut,
+          } : null}
+          onNext={handleNext}
+          allowEnterAdvanceOnAnswered={allowEnterAdvance}
+          isLastQuestion={currentQuestionIndex === questions.length - 1}
+        />
+      );
+    }
+
     // Nếu là quiz Từ vựng dạng Typing
     if (lastQuizSettings.quizType === 'VOCABULARY' && lastQuizSettings.quizFormat === 'VI_TO_JP_TYPING' && lastQuizSettings.typingSettings) {
       return (
@@ -120,6 +144,7 @@ export default function QuizPage() {
             : null}
           onNext={handleNext}
           allowEnterAdvanceOnAnswered={allowEnterAdvance}
+          isLastQuestion={currentQuestionIndex === questions.length - 1}
         />
       );
     }
@@ -140,6 +165,7 @@ export default function QuizPage() {
             } : null}
             onNext={handleNext}
             allowEnterAdvanceOnAnswered={allowEnterAdvance}
+            isLastQuestion={currentQuestionIndex === questions.length - 1}
           />
         );
       }

@@ -3,7 +3,7 @@
 // Toàn bộ chú thích bằng tiếng Việt
 
 import type { Question } from "../types/quiz";
-import { base_hira, dakuten, yoon } from "../data/kana";
+import { base_hira, base_kata, dakuten, yoon } from "../data/kana";
 import { ALL_LESSONS_DATA } from "../data/minnaData";
 
 /**
@@ -52,6 +52,48 @@ export function generateKanaQuestions(
     },
     type: "TYPING",
   }));
+}
+
+export function generateKanaListeningQuestions(
+  selectedSets: Record<"base" | "dakuten" | "yoon", boolean>,
+  num: number,
+  script: "hiragana" | "katakana",
+): Question[] {
+  const pool: [string, string][] = [];
+  const baseKana = script === "hiragana" ? base_hira : base_kata;
+  const toScript = ([kana, romaji]: [string, string]): [string, string] => [
+    script === "katakana"
+      ? kana.replace(/[\u3041-\u3096]/g, (char) => String.fromCharCode(char.charCodeAt(0) + 0x60))
+      : kana,
+    romaji,
+  ];
+
+  if (selectedSets.base) pool.push(...(baseKana as [string, string][]));
+  if (selectedSets.dakuten) pool.push(...(dakuten as [string, string][]).map(toScript));
+  if (selectedSets.yoon) pool.push(...(yoon as [string, string][]).map(toScript));
+
+  const pronunciationCounts = new Map<string, number>();
+  for (const [, romaji] of pool) {
+    pronunciationCounts.set(romaji, (pronunciationCounts.get(romaji) ?? 0) + 1);
+  }
+
+  const unambiguousPool = pool.filter(([, romaji]) => pronunciationCounts.get(romaji) === 1);
+  if (unambiguousPool.length < 4) return [];
+
+  const selectedQuestions = shuffle(unambiguousPool).slice(0, Math.min(num, unambiguousPool.length));
+
+  return selectedQuestions.map(([kana, romaji]) => {
+    const distractors = shuffle(unambiguousPool.filter(([candidate]) => candidate !== kana))
+      .slice(0, 3)
+      .map(([candidate]) => candidate);
+
+    return {
+      questionText: "Nghe âm và chọn kana",
+      correctAnswers: { romaji, hiragana: kana },
+      options: shuffle([kana, ...distractors]),
+      type: "MCQ",
+    };
+  });
 }
 
 /**

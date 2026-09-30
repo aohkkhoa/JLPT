@@ -126,7 +126,8 @@ export default function MatchingGame() {
     }
 
     setMistakes((previous) => previous + 1);
-    setWrongIds([id, oppositeSelection]);
+    const oppositeSide = side === "left" ? "right" : "left";
+    setWrongIds([`${side}:${id}`, `${oppositeSide}:${oppositeSelection}`]);
     setIsResolving(true);
     wrongTimeoutRef.current = window.setTimeout(() => {
       setWrongIds([]);
@@ -137,10 +138,10 @@ export default function MatchingGame() {
     }, 650);
   };
 
-  const getItemClassName = (id: string, selectedId: string | null) => {
+  const getItemClassName = (id: string, side: "left" | "right", selectedId: string | null) => {
     const base = "min-h-12 w-full break-words rounded-lg border px-2 py-2 text-sm font-semibold leading-tight transition-colors sm:min-h-14 sm:px-3 sm:text-base";
     if (matchedIds.has(id)) return `${base} border-emerald-300 bg-emerald-100 text-emerald-800 opacity-70`;
-    if (wrongIds.includes(id)) return `${base} border-red-400 bg-red-100 text-red-800`;
+    if (wrongIds.includes(`${side}:${id}`)) return `${base} border-red-400 bg-red-100 text-red-800`;
     if (selectedId === id) return `${base} border-sky-500 bg-sky-100 text-sky-900`;
     return `${base} border-gray-200 bg-white text-gray-800 hover:border-sky-300 hover:bg-sky-50`;
   };
@@ -226,6 +227,11 @@ export default function MatchingGame() {
         <span>Thời gian {formatTime(elapsedSeconds)}</span>
         <span>Lượt sai {mistakes}</span>
       </div>
+      {isResolving && (
+        <p role="status" aria-live="polite" className="mb-3 text-center text-sm font-semibold text-red-700">
+          Ghép chưa đúng, thử lại.
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-2 sm:gap-5">
         {[{ side: "left" as const, items: leftItems, selectedId: selectedLeft }, { side: "right" as const, items: rightItems, selectedId: selectedRight }].map(({ side, items, selectedId }) => (
@@ -237,7 +243,7 @@ export default function MatchingGame() {
                 disabled={matchedIds.has(item.id) || isResolving}
                 aria-pressed={selectedId === item.id}
                 onClick={() => handlePick(side, item.id)}
-                className={getItemClassName(item.id, selectedId)}
+                className={getItemClassName(item.id, side, selectedId)}
               >
                 {side === "left" ? item.left : item.right}
               </button>
